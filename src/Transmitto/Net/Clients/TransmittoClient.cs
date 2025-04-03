@@ -81,9 +81,9 @@ public class TransmittoClient : ITransmittoClient
 
 	private async Task StartEventLoopAsync(ITransmittoClientConnection connection, TransmittoStatus response, CancellationToken token)
 	{
-		var delayedTask = Task.Delay(20000).ContinueWith(task => {
+		var delayedTask = Task.Delay(20000, token).ContinueWith(task => {
 			// TODO: TESTCODE: Add code to publish an event after 20s.
-		});
+		}, token);
 
 		while (!token.IsCancellationRequested)
 		{
@@ -95,7 +95,7 @@ public class TransmittoClient : ITransmittoClient
 			}
 			catch (Exception e)
 			{
-				_logger.LogError(e, "An un expected error.");
+				_logger.LogError(e, "An unexpected error.");
 			}
 		}
 
