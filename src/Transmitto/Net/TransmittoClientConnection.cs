@@ -1,5 +1,4 @@
 ﻿using System.Net.Sockets;
-using System.Reflection.PortableExecutable;
 using Transmitto.Net.Clients;
 using Transmitto.Net.Models;
 using Transmitto.Net.Requests;

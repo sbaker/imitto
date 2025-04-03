@@ -1,5 +1,4 @@
 ﻿using Transmitto.Net;
-using Transmitto.Net.Models;
 using Transmitto.Net.Requests;
 using Transmitto.Net.Responses;
 

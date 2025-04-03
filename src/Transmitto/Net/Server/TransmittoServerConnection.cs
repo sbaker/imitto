@@ -1,6 +1,4 @@
-﻿using Transmitto.Net.Clients;
-
-namespace Transmitto.Net.Server;
+﻿namespace Transmitto.Net.Server;
 
 public abstract class TransmittoServerConnection : TransmittoConnection, ITransmittoServerConnection
 {

@@ -1,7 +1,4 @@
-﻿
-using Microsoft.Extensions.Primitives;
-
-namespace Transmitto.Net;
+﻿namespace Transmitto.Net;
 
 internal class TransmittoPaths
 {

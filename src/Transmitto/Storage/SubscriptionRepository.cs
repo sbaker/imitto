@@ -1,6 +1,4 @@
-﻿using Transmitto.Storage.Internal;
-
-namespace Transmitto.Storage;
+﻿namespace Transmitto.Storage;
 
 public abstract class SubscriptionRepository : ISubscriptionRepository
 {

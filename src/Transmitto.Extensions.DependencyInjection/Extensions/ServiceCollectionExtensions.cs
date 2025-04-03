@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Threading.Channels;
 using Transmitto;
 using Transmitto.Channels;
 using Transmitto.Extensions.DependencyInjection;
@@ -7,7 +6,6 @@ using Transmitto.Net;
 using Transmitto.Net.Clients;
 using Transmitto.Net.Server;
 using Transmitto.Server;
-using Transmitto.Storage;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.DependencyInjection;

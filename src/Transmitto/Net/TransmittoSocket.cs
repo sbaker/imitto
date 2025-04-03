@@ -1,9 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using Transmitto.Net.Models;
-using Transmitto.Net.Requests;
-using Transmitto.Net.Responses;
 using Transmitto.Net.Settings;
 
 namespace Transmitto.Net;

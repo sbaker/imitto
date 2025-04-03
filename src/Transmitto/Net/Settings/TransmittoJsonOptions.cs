@@ -1,10 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
-using Transmitto.Net.Requests;
 using Transmitto.Converters;
 using Transmitto.Net.Models;
-using System.Xml;
 
 namespace Transmitto.Net.Settings;
 
@@ -22,6 +20,7 @@ public class TransmittoJsonOptions
 		Converters = {
 			new JsonStringEnumConverter(),
 			new TransmittoBodyConverter(),
+			new TransmittoHeaderConverter(),
 			new TransmittoAuthenticationRequestConverter()
 		}
 	};
@@ -42,14 +41,13 @@ internal class TransmittoHeaderConverter : JsonConverter<TransmittoHeader>
 	public override TransmittoHeader? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		var element = JsonElement.ParseValue(ref reader);
-		var result = element.Deserialize<TransmittoHeader>();
-		//result.RawBody = element.ToString();
-		return result;
+		var result = element.Deserialize<IDictionary<string, object?>>();
+
+		return new TransmittoHeader(result);
 	}
 
 	public override void Write(Utf8JsonWriter writer, TransmittoHeader value, JsonSerializerOptions options)
 	{
-		var message = JsonSerializer.Serialize(value, options);
 		writer.WriteStartObject();
 
 		if (value.Path is not null)
@@ -58,16 +56,16 @@ internal class TransmittoHeaderConverter : JsonConverter<TransmittoHeader>
 			writer.WriteStringValue(value.Path);
 		}
 
-		if (value.Result is not null)
+		if (value.Action is not null)
 		{
 			writer.WritePropertyName(nameof(value.Action));
 			writer.WriteStringValue(value.Action.ToString());
 		}
 
-		if (value.Result is not null)
+		if (value.Length.HasValue)
 		{
 			writer.WritePropertyName(nameof(value.Length));
-			writer.WriteNumberValue(value.Length);
+			writer.WriteNumberValue(value.Length.Value);
 		}
 
 		if (value.Result is not null)
@@ -81,7 +79,7 @@ internal class TransmittoHeaderConverter : JsonConverter<TransmittoHeader>
 			if (item.Value is not null)
 			{
 				writer.WritePropertyName(item.Key);
-				writer.WriteStringValue(item.Value);
+				writer.WriteStringValue(item.Value.ToString());
 			}
 		}
 

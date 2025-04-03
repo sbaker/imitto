@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Threading.Channels;
 using Transmitto.Channels;
 using Transmitto.Net.Models;
 
@@ -75,22 +74,23 @@ public class TransmittoClient : ITransmittoClient
 
 			if (response.Success)
 			{
-				var backgroundTask = new Task(() => {
-					using var _ = StartEventLoopAsync(Connection, response, token);
-				}, token);
-
-				backgroundTask.Start();
+				await StartEventLoopAsync(Connection, response, token);
 			}
 		}, token);
 	}
 
 	private async Task StartEventLoopAsync(ITransmittoClientConnection connection, TransmittoStatus response, CancellationToken token)
 	{
+		var delayedTask = Task.Delay(20000).ContinueWith(task => {
+			// TODO: TESTCODE: Add code to publish an event after 20s.
+		});
+
 		while (!token.IsCancellationRequested)
 		{
 			try
 			{
 				var eventNotifications = await connection.WaitForEventsAsync(token);
+
 				await _eventDispatcher.DispatchAsync(eventNotifications);
 			}
 			catch (Exception e)
@@ -98,6 +98,8 @@ public class TransmittoClient : ITransmittoClient
 				_logger.LogError(e, "An un expected error.");
 			}
 		}
+
+		await delayedTask;
 	}
 }
 
