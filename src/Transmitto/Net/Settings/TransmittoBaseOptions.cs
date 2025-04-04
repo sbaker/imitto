@@ -11,7 +11,7 @@ public abstract class TransmittoBaseOptions
 
 	public int MaxConnectionRetries { get; set; } = 5;
 
-	public TransmittoConnectionOptions ConnectionOptions { get; } = new TransmittoConnectionOptions()
+	public TransmittoConnectionOptions Connection { get; } = new TransmittoConnectionOptions()
 	{
 		Host = new TransmittoHost(IPAddress.Loopback)
 	};

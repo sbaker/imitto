@@ -14,11 +14,13 @@ public sealed class ServerEventManager : EventAggregator, IServerEventManager
 	private readonly ConcurrentBag<ClientConnectionContext> _connections = [];
 
 	private readonly ILogger<ServerEventManager> _logger;
+	private readonly ITransmittoEventListener _eventListener;
 	private readonly ITransmittoChannelProvider<ConnectionContext> _channelProvider;
 
-	public ServerEventManager(ILogger<ServerEventManager> logger, ITransmittoChannelProvider<ConnectionContext> channelProvider) : base(SubscriberDefaults.InMemory)
+	public ServerEventManager(ILogger<ServerEventManager> logger, ITransmittoEventListener eventListener, ITransmittoChannelProvider<ConnectionContext> channelProvider) : base(SubscriberDefaults.InMemory)
 	{
 		_logger = logger;
+		_eventListener = eventListener;
 		_channelProvider = channelProvider;
 	}
 
@@ -32,18 +34,15 @@ public sealed class ServerEventManager : EventAggregator, IServerEventManager
 		{
 			try
 			{
-				await Task.Run(async () => {
-					var reader = _channelProvider.GetReader();
+				await Task.Run(async () =>
+				{
+					var channelReader = _channelProvider.GetReader();
 
-					while (await reader.WaitToReadAsync(token))
+					while (await channelReader.WaitToReadAsync(token))
 					{
-						var connection = await reader.ReadAsync(token);
-
-						var clientConnection = new ClientConnectionContext(connection);
-
-						_connections.Add(clientConnection);
-
-						clientConnection.StartEventLoopAsync(token);
+						var connection = await channelReader.ReadAsync(token);
+						var eventLoopTask = _eventListener.PollForEventsAsync(connection, token);
+						_connections.Add(new ClientConnectionContext(connection, eventLoopTask));
 					}
 				});
 			}
@@ -78,9 +77,4 @@ public sealed class ServerEventManager : EventAggregator, IServerEventManager
 			}
 		});
 	}
-
-	//public ISubscription Subscribe(string topic, ConnectionContext context)
-	//{
-	//	return SubscribeCore(new TopicEventSubscription(topic, this, context));
-	//}
 }

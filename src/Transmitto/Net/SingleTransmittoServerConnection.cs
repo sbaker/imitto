@@ -9,12 +9,12 @@ public class SingleTransmittoServerConnection : TransmittoServerConnection
 
 	public SingleTransmittoServerConnection(TransmittoServerOptions options) : base(options)
 	{
-		_listener = new(options.ConnectionOptions.Host.EndPoint);
+		_listener = new(options.Connection.Host.EndPoint);
 	}
 
 	public override async Task<TransmittoSocket> AcceptAsync(CancellationToken token = default)
 	{
-		var connectionOptions = Options.ConnectionOptions;
+		var connectionOptions = Options.Connection;
 		var tcpClient = await _listener.AcceptTcpClientAsync(token);
 
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;

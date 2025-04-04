@@ -1,6 +1,4 @@
-﻿using Transmitto.Net.Requests;
-
-namespace Transmitto.Net.Server;
+﻿namespace Transmitto.Net.Server;
 
 public class ServerEventContext(ConnectionContext context)
 {
