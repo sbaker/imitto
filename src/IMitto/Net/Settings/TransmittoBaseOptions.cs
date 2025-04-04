@@ -1,0 +1,18 @@
+﻿using System.Net;
+using System.Text;
+
+namespace IMitto.Net.Settings;
+
+public abstract class TransmittoBaseOptions
+{
+	public Encoding Encoding { get; set; } = Encoding.UTF8;
+
+	public TransmittoJsonOptions Json { get; set; } = new TransmittoJsonOptions();
+
+	public int MaxConnectionRetries { get; set; } = 5;
+
+	public TransmittoConnectionOptions Connection { get; } = new TransmittoConnectionOptions()
+	{
+		Host = new TransmittoHost(IPAddress.Loopback)
+	};
+}
