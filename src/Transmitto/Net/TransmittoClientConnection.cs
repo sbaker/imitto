@@ -85,8 +85,8 @@ public class TransmittoClientConnection : TransmittoConnection, ITransmittoClien
 				//var topics =Options.TypeMappings.Keys.Distinct()
 				Topics = new TopicRegistrationModel
 				{
-					PublishTopics = ["topic-1-test"],
-					SubscriptionTopics = ["topic-2-test"],
+					PublishTopics = ["test-topic-1"],
+					SubscriptionTopics = ["test-topic-2"],
 				}
 			}
 		}, token);

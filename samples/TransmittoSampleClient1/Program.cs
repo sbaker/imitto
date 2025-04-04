@@ -2,9 +2,9 @@
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Transmitto.Handlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Transmitto.Consumers;
 
 var builder = Host.CreateApplicationBuilder();
 
@@ -13,7 +13,7 @@ builder.Logging.AddJsonConsole(options => {
 });
 
 builder.Services.AddTransmitto(configure =>
-	configure.AddSubscriber<TestMessageHandler, TestMessage>("testing-topic")
+	configure.AddConsumer<TestMessageHandler, TestMessage>("testing-topic")
 	.Configure(options => {
 		options.AuthenticationKey = builder.Configuration.GetValue<string>("TestKey");
 		options.AuthenticationSecret = builder.Configuration.GetValue<string>("TestSecret");
@@ -23,9 +23,9 @@ var host = builder.Build();
 
 host.Run();
 
-public class TestMessageHandler : ITransmittoMessageHandler<TestMessage>
+public class TestMessageHandler : ITransmittoMessageConsumer<TestMessage>
 {
-	public Task<MessageHandlerResult> HandleAsync(TestMessage message)
+	public Task<MessageConsumptionResult> ConsumeAsync(TestMessage message)
 	{
 		throw new NotImplementedException();
 	}
