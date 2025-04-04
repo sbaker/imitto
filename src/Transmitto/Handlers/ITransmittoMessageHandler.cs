@@ -9,10 +9,10 @@
 	{
 		public MessageHandlerResult(bool isHandled)
 		{
-			IsHandled = isHandled;
+			Handled = isHandled;
 		}
 
-		public bool IsHandled { get; set; }
+		public bool Handled { get; set; }
 
 		public Exception? Exception { get; set; }
 	}

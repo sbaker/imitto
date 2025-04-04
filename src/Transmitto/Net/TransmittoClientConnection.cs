@@ -52,7 +52,7 @@ public class TransmittoClientConnection : TransmittoConnection, ITransmittoClien
 		}
 
 		var tcpClient = new TcpClient();
-		var connectionOptions = Options.ConnectionOptions;
+		var connectionOptions = Options.Connection;
 		await tcpClient.ConnectAsync(connectionOptions.Host.EndPoint, token);
 
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;
@@ -77,7 +77,7 @@ public class TransmittoClientConnection : TransmittoConnection, ITransmittoClien
 		{
 			Header = new()
 			{
-				Path = "/topics",
+				Path = TransmittoPaths.Topics,
 				Action = TransmittoEventType.Consume
 			},
 			Body = new()
@@ -93,7 +93,7 @@ public class TransmittoClientConnection : TransmittoConnection, ITransmittoClien
 		
 		while (!token.IsCancellationRequested && !_transmittoSocket.DataAvailable)
 		{
-			await Task.Delay(200, token);
+			await Task.Delay(Options.Connection.TaskDelayMilliseconds, token);
 		}
 
 		var response = await _transmittoSocket.ReadResponseAsync<EventNotificationsResponse>(token);

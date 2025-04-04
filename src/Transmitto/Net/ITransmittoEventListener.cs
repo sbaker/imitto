@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Transmitto.Channels;
 using Transmitto.Net.Models;
 using Transmitto.Net.Requests;
+using Transmitto.Net.Settings;
 
 namespace Transmitto.Net;
 
@@ -13,11 +15,13 @@ public interface ITransmittoEventListener
 public class TransmittoEventListener : ITransmittoEventListener
 {
 	private readonly ILogger<TransmittoEventListener> _logger;
+	private readonly TransmittoConnectionOptions _options;
 	private readonly ITransmittoChannelWriterProvider<ClientNotificationModel> _channelWriter;
 
-	public TransmittoEventListener(ILogger<TransmittoEventListener> logger, ITransmittoChannelWriterProvider<ClientNotificationModel> channelWriter)
+	public TransmittoEventListener(ILogger<TransmittoEventListener> logger, IOptions<TransmittoConnectionOptions> options, ITransmittoChannelWriterProvider<ClientNotificationModel> channelWriter)
 	{
 		_logger = logger;
+		_options = options.Value;
 		_channelWriter = channelWriter;
 	}
 
@@ -27,7 +31,7 @@ public class TransmittoEventListener : ITransmittoEventListener
 
 		while (!token.IsCancellationRequested)
 		{
-			await Task.Delay(100, token);
+			await Task.Delay(_options.TaskDelayMilliseconds, token);
 
 			if (!context.Socket.DataAvailable) { continue; }
 

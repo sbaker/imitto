@@ -4,26 +4,13 @@ namespace Transmitto.Server;
 
 public class ClientConnectionContext
 {
-	public ClientConnectionContext(ConnectionContext connection)
+	public ClientConnectionContext(ConnectionContext connection, Task eventLoopTask)
 	{
 		Connection = connection;
+		EventLoopTask = eventLoopTask;
 	}
 
-	public ConnectionContext Connection { get; }
+	public ConnectionContext Connection { get; private set; }
 
-	public CancellationTokenSource TokenSource { get; private set; }
-
-	internal void StartEventLoopAsync(CancellationToken token)
-	{
-		TokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
-
-		try
-		{
-			Connection.EventListener.PollForEventsAsync(Connection, TokenSource.Token);
-		}
-		catch (Exception)
-		{
-
-		}
-	}
+	public Task EventLoopTask { get; private set; }
 }
