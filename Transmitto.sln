@@ -1,0 +1,67 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Transmitto", "src\Transmitto\Transmitto.csproj", "{571FED49-3DBF-43BD-BE95-F18CF91CBE82}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transmitto.Tests", "test\Transmitto.Tests\Transmitto.Tests.csproj", "{2717D33B-69DD-4513-B945-BE48B7C78761}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transmitto.Extensions.DependencyInjection", "src\Transmitto.Extensions.DependencyInjection\Transmitto.Extensions.DependencyInjection.csproj", "{4DD6E6B8-9917-539D-F143-8BB8F3CC50D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transmitto.Server", "src\Transmitto.Server\Transmitto.Server.csproj", "{FE165FA5-B811-49EE-9B2B-F58B82E60CF4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransmittoSampleServer", "samples\TransmittoSampleServer\TransmittoSampleServer.csproj", "{54732054-7417-4FF4-A1B4-BE9B33408977}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{92396F97-2DF5-4470-8427-110EC37CEE3A}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\connect-tcp.ps1 = scripts\connect-tcp.ps1
+		scripts\initial-request.json = scripts\initial-request.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransmittoSampleClient1", "samples\TransmittoSampleClient1\TransmittoSampleClient1.csproj", "{534A100B-AC38-4350-8B16-D5F795D8A30A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{571FED49-3DBF-43BD-BE95-F18CF91CBE82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{571FED49-3DBF-43BD-BE95-F18CF91CBE82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{571FED49-3DBF-43BD-BE95-F18CF91CBE82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{571FED49-3DBF-43BD-BE95-F18CF91CBE82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2717D33B-69DD-4513-B945-BE48B7C78761}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2717D33B-69DD-4513-B945-BE48B7C78761}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2717D33B-69DD-4513-B945-BE48B7C78761}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2717D33B-69DD-4513-B945-BE48B7C78761}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DD6E6B8-9917-539D-F143-8BB8F3CC50D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DD6E6B8-9917-539D-F143-8BB8F3CC50D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DD6E6B8-9917-539D-F143-8BB8F3CC50D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DD6E6B8-9917-539D-F143-8BB8F3CC50D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE165FA5-B811-49EE-9B2B-F58B82E60CF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE165FA5-B811-49EE-9B2B-F58B82E60CF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE165FA5-B811-49EE-9B2B-F58B82E60CF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE165FA5-B811-49EE-9B2B-F58B82E60CF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54732054-7417-4FF4-A1B4-BE9B33408977}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54732054-7417-4FF4-A1B4-BE9B33408977}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54732054-7417-4FF4-A1B4-BE9B33408977}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54732054-7417-4FF4-A1B4-BE9B33408977}.Release|Any CPU.Build.0 = Release|Any CPU
+		{534A100B-AC38-4350-8B16-D5F795D8A30A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{534A100B-AC38-4350-8B16-D5F795D8A30A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{534A100B-AC38-4350-8B16-D5F795D8A30A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{534A100B-AC38-4350-8B16-D5F795D8A30A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{54732054-7417-4FF4-A1B4-BE9B33408977} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{534A100B-AC38-4350-8B16-D5F795D8A30A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E7C5EDC5-7EB9-40F7-952D-13A157BDEEFE}
+	EndGlobalSection
+EndGlobal

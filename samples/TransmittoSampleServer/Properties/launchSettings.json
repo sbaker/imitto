@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TransmittoSampleServer": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
