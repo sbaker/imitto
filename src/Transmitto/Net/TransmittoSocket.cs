@@ -32,19 +32,19 @@ public class TransmittoSocket : IDisposable
 
 	public bool DataAvailable => _tcpClient.Connected && _tcpClient.Available > 0;
 
-	public Task<TMessage?> ReadRequestAsync<TMessage>(CancellationToken token = default) where TMessage : TransmittoMessage
+	public Task<TMessage?> ReadRequestAsync<TMessage>(CancellationToken token = default) where TMessage : ITransmittoMessage
 		=> ReadAsync<TMessage>(token);
 
-	public Task<TMessage?> ReadResponseAsync<TMessage>(CancellationToken token = default) where TMessage : TransmittoMessage
+	public Task<TMessage?> ReadResponseAsync<TMessage>(CancellationToken token = default) where TMessage : ITransmittoMessage
 		=> ReadAsync<TMessage>(token);
 
-	public Task SendResponseAsync<TMessage>(TMessage response, CancellationToken token = default) where TMessage : TransmittoMessage
+	public Task SendResponseAsync<TMessage>(TMessage response, CancellationToken token = default) where TMessage : ITransmittoMessage
 		=> SendAsync(response, token);
 
-	public Task SendRequestAsync<TMessage>(TMessage request, CancellationToken token = default) where TMessage : TransmittoMessage
+	public Task SendRequestAsync<TMessage>(TMessage request, CancellationToken token = default) where TMessage : ITransmittoMessage
 		=> SendAsync(request, token);
 
-	public async Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default) where TMessage : TransmittoMessage
+	public async Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default) where TMessage : ITransmittoMessage
 	{
 		var requestRaw = await _reader.ReadLineAsync(token);
 
@@ -59,14 +59,14 @@ public class TransmittoSocket : IDisposable
 		);
 	}
 
-	public async Task SendAsync<TMessage>(TMessage message, CancellationToken token = default) where TMessage : TransmittoMessage
+	public async Task SendAsync<TMessage>(TMessage message, CancellationToken token = default) where TMessage : ITransmittoMessage
 	{
 		ArgumentNullException.ThrowIfNull(message);
 
 		var transmittoMessage = JsonSerializer.Serialize(message, options: _options);
 
 		await _writer.WriteLineAsync(transmittoMessage);
-		_writer.Write(0x1A);
+		//_writer.Write(0x1A);
 		await _writer.FlushAsync(token);
 	}
 

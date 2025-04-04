@@ -4,8 +4,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Transmitto.Handlers;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 var builder = Host.CreateApplicationBuilder();
+
+builder.Logging.AddJsonConsole(options => {
+	options.IncludeScopes = true;
+});
 
 builder.Services.AddTransmitto(configure =>
 	configure.AddSubscriber<TestMessageHandler, TestMessage>("testing-topic")

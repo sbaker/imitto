@@ -2,19 +2,23 @@
 
 namespace Transmitto.Net.Requests;
 
-public abstract class TransmittoRequest : TransmittoMessage
+public interface ITransmittoRequest : ITransmittoMessage
 {
-	public TransmittoRequest()
+}
+
+public abstract class TransmittoRequest : TransmittoMessage, ITransmittoRequest
+{
+	protected TransmittoRequest()
 	{
 	}
 
-	public TransmittoRequest(TransmittoHeader header) : base(header)
+	protected TransmittoRequest(TransmittoHeader header) : base(header)
 	{
 		Header = header;
 	}
 }
 
-public class TransmittoRequest<TBody> : TransmittoMessage<TBody> where TBody : TransmittoMessageBody
+public class TransmittoRequest<TBody> : TransmittoMessage<TBody>, ITransmittoRequest where TBody : TransmittoMessageBody
 {
 	public TransmittoRequest()
 	{

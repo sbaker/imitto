@@ -6,7 +6,7 @@ namespace Transmitto.Channels;
 /// Provides <see cref="ChannelReader{T}"/> and <see cref="ChannelWriter{T}"/>.
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface ITransmittoChannelProvider<T> : ITransmittoChannelReaderProvider<ChannelReader<T>>, ITransmittoChannelWriterProvider<ChannelWriter<T>>
+public interface ITransmittoChannelProvider<T> : ITransmittoChannelReaderProvider<T>, ITransmittoChannelWriterProvider<T>
 {
 	/// <summary>
 	/// Tries to complete the <see cref="Channel{T}"/>.

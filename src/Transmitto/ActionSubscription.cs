@@ -8,7 +8,7 @@
         }
     }
 
-    public sealed class ActionSubscription<TData>(EventId eventId, IEventAggregator aggregator, Action<EventContext<TData>> callback) : Subscription<Action<EventContext<TData>>>(eventId, aggregator, callback)
+    public class ActionSubscription<TData>(EventId eventId, IEventAggregator aggregator, Action<EventContext<TData>> callback) : Subscription<Action<EventContext<TData>>>(eventId, aggregator, callback)
     {
         private static readonly Type DataType = typeof(TData);
 

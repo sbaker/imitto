@@ -3,8 +3,8 @@
 public enum TransmittoEventType
 {
 	None = 0,
-	ConsumeTopic = 1,
-	PublishMessage = 2,
+	Consume = 1,
+	Publish = 2,
 	Authentication = 3,
 	Completed = 5,
 	Error = 6,

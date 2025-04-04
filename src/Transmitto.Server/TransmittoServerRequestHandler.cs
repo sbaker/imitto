@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Concurrent;
 using System.Net;
+using Transmitto.Channels;
 using Transmitto.Net;
 using Transmitto.Net.Models;
 using Transmitto.Net.Requests;
@@ -12,35 +12,38 @@ namespace Transmitto.Server;
 
 public class TransmittoServerRequestHandler : ITransmittoRequestHandler
 {
-	private readonly ConcurrentDictionary<string, ConnectionContext> _connectedClients = new();
 	private readonly TransmittoServerOptions _options;
 	private readonly ILogger<TransmittoServerRequestHandler> _logger;
 	private readonly ITransmittoAuthenticationHandler _authenticationHandler;
-	private readonly IServerEventAggregator _eventAggregator;
+	private readonly IServerEventManager _eventManager;
+	private readonly ITransmittoChannelWriterProvider<ConnectionContext> _channelProvider;
+	private readonly ITransmittoEventListener _eventListener;
 
 	public TransmittoServerRequestHandler(
 		IOptions<TransmittoServerOptions> options,
 		ILogger<TransmittoServerRequestHandler> logger,
 		ITransmittoAuthenticationHandler authenticationHandler,
-		IServerEventAggregator eventAggregator)
+		IServerEventManager eventManager,
+		ITransmittoChannelWriterProvider<ConnectionContext> channelProvider,
+		ITransmittoEventListener eventListener)
 	{
 		_options = options.Value;
 		_logger = logger;
 		_authenticationHandler = authenticationHandler;
-		_eventAggregator = eventAggregator;
+		_eventManager = eventManager;
+		_channelProvider = channelProvider;
+		_eventListener = eventListener;
 	}
 
 	public Task HandleRequestAsync(ConnectionContext context, CancellationToken token = default)
 	{
-		_connectedClients.AddOrUpdate(context.ConnectionId, context, (k, v) => context);
-
 		return Task.Run(async () => await WaitForAuthenticationAsync(context, token), token);
 	}
 
 	private async Task<TRequest?> ListenForRequest<TRequest>(ConnectionContext context, CancellationToken token)
-		where TRequest : TransmittoMessage
+		where TRequest : ITransmittoRequest
 	{
-		_logger.LogTrace("Listen For Request: start");
+		_logger.LogTrace("Listen For Request: start {connectionId}", context.ConnectionId);
 
 		while (!context.Socket.DataAvailable)
 		{
@@ -49,22 +52,31 @@ public class TransmittoServerRequestHandler : ITransmittoRequestHandler
 			token.ThrowIfCancellationRequested();
 		}
 
-		_logger.LogTrace("Listen For Request: end");
+		_logger.LogTrace("Listen For Request: end {connectionId}", context.ConnectionId);
 
-		return await context.Socket.ReadAsync<TRequest>(token);
+		var message = await context.Socket.ReadAsync<TRequest>(token);
+
+		if (message is not null)
+		{
+			_eventManager.Publish(ServerEventConstants.MessageReceivedEvent, message);
+		}
+
+		return message;
 	}
 
 	private async Task WaitForAuthenticationAsync(ConnectionContext context, CancellationToken token)
 	{
+		token.ThrowIfCancellationRequested();
+
 		var message = await ListenForRequest<AuthenticationRequest>(context, token);
 
-		_logger.LogTrace("Authentication Message received: {message}", message);
+		_logger.LogTrace("Authentication Message received: {connecitonId} {message}", context.ConnectionId, message);
 
 		if (message is not null)
 		{
-			_logger.LogTrace("Authentication: start");
+			_logger.LogTrace("Authentication: start {connectionId}", context.ConnectionId);
 			await AuthenticationAsync(context, message, token);
-			_logger.LogTrace("Authentication: end");
+			_logger.LogTrace("Authentication: end {connectionId}", context.ConnectionId);
 		}
 
 		await WaitForTopicsAsync(context, token);
@@ -72,73 +84,58 @@ public class TransmittoServerRequestHandler : ITransmittoRequestHandler
 
 	private async Task WaitForTopicsAsync(ConnectionContext context, CancellationToken token)
 	{
-		while (context.Socket.IsConnected)
+		token.ThrowIfCancellationRequested();
+
+		var message = await ListenForRequest<TransmittoTopicsRequest>(context, token);
+
+		_logger.LogTrace("Topic Registration received: {connecitonId} {message}", context.ConnectionId, message);
+
+		if (message is not null)
 		{
-			token.ThrowIfCancellationRequested();
+			var validationResult = await _authenticationHandler.AuthorizeTopicAccess(context, message);
 
-			var message = await ListenForRequest<TransmittoTopicsRequest>(context, token);
-
-			_logger.LogTrace("Authentication Message received: {connecitonId} {message}", context.ConnectionId, message);
-
-			if (message is not null)
+			if (validationResult.IsAuthorized)
 			{
-				_logger.LogTrace("GetEventNotifications: start {connectionId}", context.ConnectionId);
-				await GetEventNotificationsForTopics(context, message, token);
-				_logger.LogTrace("GetEventNotifications: end {connectionId}", context.ConnectionId);
+				await RegisterClientForNotification(context, message, token);
 			}
 		}
 	}
 
-	private async Task GetEventNotificationsForTopics(ConnectionContext context, TransmittoTopicsRequest header, CancellationToken token)
+	private async Task RegisterClientForNotification(ConnectionContext context, TransmittoTopicsRequest header, CancellationToken token)
 	{
-		await SendResponse(context, new TransmittoResponse<EventNotificationsBody>
+		_logger.LogTrace("Registering client for events: start {connectionId}", context.ConnectionId);
+
+		var writer = _channelProvider.GetWriter();
+
+		if (await writer.WaitToWriteAsync(token))
 		{
-			Header = new(),
-			Body = new()
-			{
-				Content = new()
-				{
-					Events = [new()
-					{
-						Event = new TransmittoEvent<string>
-						{
-							Message = "this is a test from the server"
-						}
-					}]
-				}
-			}
-		}, token);
+			await writer.WriteAsync(context, token);
+		
+			_logger.LogTrace("Registered client success: {connectionId}", context.ConnectionId);
+		}
+
+		_logger.LogTrace("Registering client for events: end {connectionId}", context.ConnectionId);
 	}
 
 	private async Task AuthenticationAsync(ConnectionContext context, AuthenticationRequest request, CancellationToken token)
 	{
-		TransmittoStatusBody? body;
-		TransmittoHeader? header;
+		TransmittoHeader? header = TransmittoHeader.Error;
+		TransmittoStatusBody? body = TransmittoStatusBody.Error("The request could not be authenticated.");
 
-		switch (request.Header.Action)
+		if (request.Header.Action == TransmittoEventType.Authentication)
 		{
-			case TransmittoEventType.Authentication:
-				{
-					_logger.LogTrace("Authenticating request: start");
-					var authenticated = await _authenticationHandler.HandleAuthenticationAsync(context, token);
+			_logger.LogTrace("Authenticating request: start {connectionId}", context.ConnectionId);
 
-					body = TransmittoStatusBody.WithStatus(
-						authenticated ? (int)HttpStatusCode.OK : (int)HttpStatusCode.Unauthorized
-					);
-					header = new TransmittoHeader
-					{
-						Action = authenticated ? TransmittoEventType.Completed : TransmittoEventType.Unauthorized,
-					};
+			var authenticated = await _authenticationHandler.HandleAuthenticationAsync(context, token);
 
-					_logger.LogTrace("Authenticating request: end");
-					break;
-				}
-			default:
-				{
-					body = TransmittoStatusBody.Error("");
-					header = TransmittoHeader.Error;
-					break;
-				}
+			body = TransmittoStatusBody.WithStatus(authenticated
+				? (int)HttpStatusCode.OK
+				: (int)HttpStatusCode.Unauthorized);
+			header = TransmittoHeader.Authorization(authenticated
+				? TransmittoEventType.Completed
+				: TransmittoEventType.Unauthorized);
+
+			_logger.LogTrace("Authenticating request: end {connectionId}", context.ConnectionId);
 		}
 
 		await SendResponse(context, new TransmittoStatusResponse(body, header), token);
@@ -146,8 +143,13 @@ public class TransmittoServerRequestHandler : ITransmittoRequestHandler
 
 	private async Task SendResponse<TBody>(ConnectionContext context, TransmittoResponse<TBody> response, CancellationToken token = default) where TBody : TransmittoMessageBody
 	{
-		_logger.LogTrace("Writing response: start");
+		_logger.LogTrace("Writing response: start {connectionId}", context.ConnectionId);
 		await context.Socket.SendResponseAsync(response, token);
-		_logger.LogTrace("Writing response: end");
+		_logger.LogTrace("Writing response: end {connectionId}", context.ConnectionId);
+	}
+
+	public ITransmittoEventListener GetEventListener()
+	{
+		return _eventListener;
 	}
 }

@@ -3,7 +3,7 @@ using Transmitto.Storage;
 
 namespace Transmitto;
 
-public class EventAggregator(ISubscriptionRepository? repository = null) : IEventAggregator
+public class EventAggregator(ISubscriptionRepository? repository = null) : Disposable, IEventAggregator
 {
 	protected ISubscriptionRepository Repository { get; } = repository ?? SubscriberDefaults.InMemory;
 
@@ -34,8 +34,8 @@ public class EventAggregator(ISubscriptionRepository? repository = null) : IEven
 		{
 			return;
 		}
-
-		var context = new EventContext<TData>(eventId, this, data);
+		
+		var context = CreateEventContext(eventId, data);
 
 		foreach (var subscription in subscriptions)
 		{
@@ -43,20 +43,19 @@ public class EventAggregator(ISubscriptionRepository? repository = null) : IEven
 		}
 	}
 
+	protected virtual EventContext<TData> CreateEventContext<TData>(EventId eventId, TData data)
+	{
+		return new EventContext<TData>(eventId, this, data);
+	}
+
 	public Task PublishAsync<TData>(EventId eventId, TData data)
 	{
 		return Task.Run(() => Publish(eventId, data));
 	}
 
-	public void Dispose()
-	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
 	public async ValueTask DisposeAsync()
 	{
-		await DisposeAsyncCore();
+		await DisposeAsyncCore(true);
 		GC.SuppressFinalize(this);
 	}
 
@@ -67,17 +66,18 @@ public class EventAggregator(ISubscriptionRepository? repository = null) : IEven
 		return subscription;
 	}
 
-	protected virtual void Dispose(bool disposing)
+	protected override void DisposeCore()
 	{
-		if (disposing)
+		DisposeSubscriptions();
+	}
+
+	protected virtual ValueTask DisposeAsyncCore(bool disposing)
+	{
+		if (disposing && ! Disposed)
 		{
 			DisposeSubscriptions();
 		}
-	}
 
-	protected virtual ValueTask DisposeAsyncCore()
-	{
-		DisposeSubscriptions();
 		return ValueTask.CompletedTask;
 	}
 

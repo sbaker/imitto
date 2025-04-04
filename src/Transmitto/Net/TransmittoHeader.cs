@@ -1,6 +1,4 @@
-﻿
-
-namespace Transmitto.Net;
+﻿namespace Transmitto.Net;
 
 public class TransmittoHeader : Dictionary<string, object?>
 {
@@ -30,6 +28,16 @@ public class TransmittoHeader : Dictionary<string, object?>
 			return Enum.Parse<TransmittoEventType>(stringValue);
 		}
 	}
+
+	public static TransmittoHeader Authorization(TransmittoEventType? result = null, string? correlationId = null) => new()
+	{
+		Path = TransmittoPaths.Auth,
+		Action = TransmittoEventType.Authentication,
+		Result = result,
+		CorrelationId = correlationId
+	};
+
+	public string? CorrelationId { get; set; }
 
 	public string? Path { get; set; }
 

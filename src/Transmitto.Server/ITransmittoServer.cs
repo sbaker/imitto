@@ -2,11 +2,13 @@
 
 namespace Transmitto.Server;
 
-public interface ITransmittoServer
+public interface ITransmittoServer : IDisposable
 {
 	TransmittoServerOptions Options { get; }
 
 	string Name { get; }
+
+	bool Started { get; }
 
 	Task StartAsync(CancellationToken? token = null);
 

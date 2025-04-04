@@ -9,6 +9,8 @@ public abstract class TransmittoBaseOptions
 
 	public TransmittoJsonOptions Json { get; set; } = new TransmittoJsonOptions();
 
+	public int MaxConnectionRetries { get; set; } = 5;
+
 	public TransmittoConnectionOptions ConnectionOptions { get; } = new TransmittoConnectionOptions()
 	{
 		Host = new TransmittoHost(IPAddress.Loopback)

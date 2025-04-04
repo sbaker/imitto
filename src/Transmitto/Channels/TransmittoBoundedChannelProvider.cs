@@ -3,10 +3,17 @@ using System.Threading.Channels;
 
 namespace Transmitto.Channels;
 
-public sealed class TransmittoBoundedChannelProvider<T>(IOptions<TransmittoBoundedChannelOptions> options)
-	: ITransmittoChannelProvider<T>
+public sealed class TransmittoBoundedChannelProvider<T> : ITransmittoChannelProvider<T>
 {
-	private readonly Channel<T> _channel = Channel.CreateBounded<T>(new BoundedChannelOptions(options.Value.Capacity));
+	private readonly Channel<T> _channel;
+
+	public TransmittoBoundedChannelProvider(IOptions<TransmittoBoundedChannelOptions> options)
+	{
+		_channel = Channel.CreateBounded<T>(new BoundedChannelOptions(options.Value.Capacity)
+		{
+			FullMode = BoundedChannelFullMode.Wait
+		});
+	}
 
 	public bool Complete()
 	{

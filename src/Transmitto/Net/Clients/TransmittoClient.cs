@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Transmitto.Channels;
 using Transmitto.Net.Models;
 
 namespace Transmitto.Net.Clients;
@@ -22,9 +21,9 @@ public class TransmittoClient : ITransmittoClient
 		_eventDispatcher = eventDispatcher;
 	}
 
-	private CancellationTokenSource? TokenSource { get; set; }
-	
-	private ITransmittoClientConnection? Connection { get; set; }
+	protected CancellationTokenSource? TokenSource { get; set; }
+
+	protected ITransmittoClientConnection? Connection { get; set; }
 
 	protected virtual void Dispose(bool disposing)
 	{
@@ -32,18 +31,16 @@ public class TransmittoClient : ITransmittoClient
 		{
 			if (disposing)
 			{
+				TokenSource?.Dispose();
 				Connection?.Dispose();
 			}
 
-			// TODO: free unmanaged resources (unmanaged objects) and override finalizer
-			// TODO: set large fields to null
 			_disposedValue = true;
 		}
 	}
 
 	public void Dispose()
 	{
-		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
 		Dispose(disposing: true);
 		GC.SuppressFinalize(this);
 	}
@@ -57,85 +54,68 @@ public class TransmittoClient : ITransmittoClient
 		Connection?.Dispose();
 	}
 
-	private Task RunInternalAsync(CancellationToken token)
+	protected Task RunInternalAsync(CancellationToken token)
 	{
 		Subscribe.To<string>(0, ctx => _logger.LogInformation("Message received: {data}", ctx.Data));
 
 		return Task.Run(async () =>
 		{
-			Connection = TransmittoConnection.CreateClient(_options);
+			var retries = 0;
 
-			if (!Connection.IsConnected())
+			// Try {_options.MaxConnectionRetries} times to connect and authenticate.
+			while (_options.MaxConnectionRetries > retries++)
 			{
-				await Connection.ConnectAsync();
-			}
+				try
+				{
+					Connection = TransmittoConnection.CreateClient(_options);
 
-			var response = await Connection.AuthenticateAsync(token);
+					if (!Connection.IsConnected())
+					{
+						await Connection.ConnectAsync();
+					}
 
-			if (response.Success)
-			{
-				await StartEventLoopAsync(Connection, response, token);
+					var response = await Connection.AuthenticateAsync(token);
+
+					if (response.Success)
+					{
+						await StartEventLoopAsync(Connection, response, token);
+					}
+				}
+				catch (TaskCanceledException tce)
+				{
+					_logger.LogWarning(tce, "Task canceled");
+					break;
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Unknown error.");
+				}
+
+				Connection?.Dispose();
 			}
 		}, token);
 	}
 
-	private async Task StartEventLoopAsync(ITransmittoClientConnection connection, TransmittoStatus response, CancellationToken token)
+	protected async Task StartEventLoopAsync(ITransmittoClientConnection connection, TransmittoStatus response, CancellationToken token)
 	{
 		var delayedTask = Task.Delay(20000, token).ContinueWith(task => {
 			// TODO: TESTCODE: Add code to publish an event after 20s.
 		}, token);
 
-		while (!token.IsCancellationRequested)
+		try
 		{
-			try
+			while (!token.IsCancellationRequested)
 			{
 				var eventNotifications = await connection.WaitForEventsAsync(token);
 
 				await _eventDispatcher.DispatchAsync(eventNotifications);
 			}
-			catch (Exception e)
-			{
-				_logger.LogError(e, "An unexpected error.");
-			}
+		}
+		catch (Exception e)
+		{
+			_logger.LogError(e, "An unexpected error.");
 		}
 
 		await delayedTask;
-	}
-}
-
-public interface ITransmittoEventDispatcher
-{
-	ValueTask DispatchAsync(EventNotificationsModel notifications);
-}
-
-public abstract class TransmittoEventDispatcher : ITransmittoEventDispatcher
-{
-	private readonly ILogger _logger;
-
-	protected TransmittoEventDispatcher(ILogger logger)
-	{
-		_logger = logger;
-	}
-
-	public abstract ValueTask DispatchAsync(EventNotificationsModel notifications);
-}
-
-public class ChannelTransmittoEventDispatcher : TransmittoEventDispatcher
-{
-	private readonly ITransmittoChannelProvider<EventNotificationsModel> _queueProvider;
-
-	public ChannelTransmittoEventDispatcher(
-		ILogger<TransmittoEventDispatcher> logger,
-		ITransmittoChannelProvider<EventNotificationsModel> queueProvider) : base(logger)
-	{
-		_queueProvider = queueProvider;
-	}
-
-	public override ValueTask DispatchAsync(EventNotificationsModel notifications)
-	{
-		return new ValueTask(Task.Run(() => {
-			var channelWriter = _queueProvider.GetWriter();
-			return channelWriter.WriteAsync(notifications);
-		}));
 	}
 }

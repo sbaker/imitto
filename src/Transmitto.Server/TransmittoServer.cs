@@ -5,28 +5,33 @@ using Transmitto.Net.Server;
 
 namespace Transmitto.Server;
 
-public sealed class TransmittoServer : ITransmittoServer
+public sealed class TransmittoServer : Disposable, ITransmittoServer
 {
 	private Task? _startedTask = null;
+	private Task? _eventManagerTask = null;
 	private readonly ILogger<TransmittoServer> _logger;
 	private readonly ITransmittoRequestHandler _requestHandler;
-	private readonly IEventAggregator _eventAggregator;
+	private readonly IServerEventManager _eventManager;
 
 	public TransmittoServer(
 		IOptions<TransmittoServerOptions> options,
 		ILogger<TransmittoServer> logger,
 		ITransmittoRequestHandler requestHandler,
-		IServerEventAggregator serverEvents)
+		IServerEventManager serverEvents)
 	{
 		Options = options.Value;
 		_logger = logger;
 		_requestHandler = requestHandler;
-		_eventAggregator = serverEvents;
+		_eventManager = serverEvents;
 	}
+
+	public bool Started => _startedTask != null && !_startedTask.IsCompleted;
 
 	private CancellationTokenSource? TokenSource { get; set; }
 
 	private Task StartedTask => _startedTask ?? Task.CompletedTask;
+
+	private Task EventManagerTask => _eventManagerTask ?? Task.CompletedTask;
 
 	public TransmittoServerOptions Options { get; }
 
@@ -43,6 +48,9 @@ public sealed class TransmittoServer : ITransmittoServer
 	public Task RunAsync(CancellationToken token = default)
 	{
 		_logger.LogTrace("Run Server: start");
+
+		_eventManagerTask = _eventManager.RunAsync(token);
+
 		return Task.Run(async () =>
 		{
 			var retryCount = 0;
@@ -67,16 +75,24 @@ public sealed class TransmittoServer : ITransmittoServer
 
 						var socket = await AcceptRequest(Connection, TokenSource.Token);
 
-						var context = new ConnectionContext(_eventAggregator, socket);
+						var eventListener = _requestHandler.GetEventListener();
+
+						var context = new ConnectionContext(
+							_eventManager,
+							socket,
+							eventListener,
+							TokenSource.Token);
+
+						_logger.LogTrace("Connection Accepted: start {connectionId}", context.ConnectionId);
 						
-						void task()
+						void HandleBackgroundTask()
 						{
 							_requestHandler.HandleRequestAsync(context, token);
 						}
 
-						context.Task = new Task(task, TokenSource.Token);
+						context.BackgroundTask = new Task(HandleBackgroundTask, TokenSource.Token);
 
-						context.Task.Start();
+						context.BackgroundTask.Start();
 					}
 
 					_logger.LogTrace("Accepting Connections: end; CancellationToken requested cancel");
@@ -114,16 +130,29 @@ public sealed class TransmittoServer : ITransmittoServer
 	{
 		using var cts = TokenSource ?? CancellationTokenSource.CreateLinkedTokenSource(token);
 
-		if (!StartedTask.IsCompleted)
+		await Task.WhenAll(StopBackgroundTask(EventManagerTask, token), StopBackgroundTask(StartedTask, token));
+
+		async Task StopBackgroundTask(Task task, CancellationToken token)
 		{
-			try
+			if (!task.IsCompleted)
 			{
-				cts.CancelAfter(TimeSpan.FromSeconds(5));
-				await StartedTask.WaitAsync(cts.Token);
-			}
-			catch (TaskCanceledException)
-			{
+				try
+				{
+					cts.CancelAfter(TimeSpan.FromSeconds(5));
+					await task.WaitAsync(cts.Token);
+				}
+				catch (TaskCanceledException tce)
+				{
+					_logger.LogWarning(tce, "Timeout waiting for task. Stop background task");
+				}
 			}
 		}
+	}
+
+	protected override void DisposeCore()
+	{
+		StopAsync(TokenSource.Token).Wait();
+		TokenSource?.Dispose();
+		Connection?.Dispose();
 	}
 }

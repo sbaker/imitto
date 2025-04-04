@@ -2,7 +2,11 @@
 
 namespace Transmitto.Net.Responses;
 
-public abstract class TransmittoResponse : TransmittoMessage
+public interface ITransmittoResponse : ITransmittoMessage
+{
+}
+
+public abstract class TransmittoResponse : TransmittoMessage, ITransmittoResponse
 {
 	public TransmittoResponse()
 	{
@@ -14,7 +18,7 @@ public abstract class TransmittoResponse : TransmittoMessage
 	}
 }
 
-public class TransmittoResponse<TBody> : TransmittoMessage<TBody> where TBody : TransmittoMessageBody
+public class TransmittoResponse<TBody> : TransmittoMessage<TBody>, ITransmittoResponse where TBody : TransmittoMessageBody
 {
 	public TransmittoResponse()
 	{

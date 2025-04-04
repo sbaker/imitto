@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Threading.Channels;
 using Transmitto;
 using Transmitto.Channels;
 using Transmitto.Extensions.DependencyInjection;
 using Transmitto.Net;
 using Transmitto.Net.Clients;
+using Transmitto.Net.Models;
 using Transmitto.Net.Server;
 using Transmitto.Server;
 
@@ -24,13 +26,14 @@ public static class ServiceCollectionExtensions
 		return services.AddSingleton<IEventAggregator, TEventAggregator>();
 	}
 
-	public static IServiceCollection AddChannels(this IServiceCollection services, Action<TransmittoBoundedChannelOptions> configure)
+	public static IServiceCollection AddChannels<TChannelModel>(this IServiceCollection services, Action<TransmittoBoundedChannelOptions> configure)
 	{
-		var boundedChannelType = typeof(TransmittoBoundedChannelProvider<>);
 		services.Configure(configure);
-		services.TryAddSingleton(typeof(ITransmittoChannelReaderProvider<>), boundedChannelType);
-		services.TryAddSingleton(typeof(ITransmittoChannelWriterProvider<>), boundedChannelType);
-		services.TryAddSingleton(typeof(ITransmittoChannelProvider<>), boundedChannelType);
+		services.TryAddSingleton<ITransmittoChannelReaderProvider<TChannelModel>>(
+			s => s.GetRequiredService<ITransmittoChannelProvider<TChannelModel>>());
+		services.TryAddSingleton<ITransmittoChannelWriterProvider<TChannelModel>>(
+			s => s.GetRequiredService<ITransmittoChannelProvider<TChannelModel>>());
+		services.TryAddSingleton<ITransmittoChannelProvider<TChannelModel>, TransmittoBoundedChannelProvider<TChannelModel>>();
 		return services;
 	}
 
@@ -41,17 +44,24 @@ public static class ServiceCollectionExtensions
 		configure(builder);
 
 		return builder.Build()
-			.AddChannels(_ => {})
+			.AddChannels<EventNotificationsModel>(_ => { })
 			.AddSingleton<ITransmittoEventDispatcher, ChannelTransmittoEventDispatcher>();
 	}
 
 	public static IServiceCollection AddTransmittoServer(this IServiceCollection services, Action<TransmittoServerOptions>? configure = null)
 	{
-		return services.Configure(configure ??= options => {})
+		return services.Configure(configure ??= options => { })
+			.AddChannels<ConnectionContext>(options => {
+				options.ChannelFullMode = BoundedChannelFullMode.Wait;
+			})
+			.AddChannels<ClientNotificationModel>(options => {
+				options.ChannelFullMode = BoundedChannelFullMode.Wait;
+			})
 			.AddHostedService<TransmittoServerHostedBackgroundService>()
 			.AddSingleton(p => SubscriberDefaults.InMemory)
-			.AddSingleton<IServerEventAggregator, ServerEventAggregator>()
+			.AddSingleton<IServerEventManager, ServerEventManager>()
 			.AddSingleton<ITransmittoRequestHandler, TransmittoServerRequestHandler>()
+			.AddSingleton<ITransmittoEventListener, TransmittoEventListener>()
 			.AddSingleton<ITransmittoAuthenticationHandler, NullAuthenticationHandler>()
 			.AddSingleton<ITransmittoServer, TransmittoServer>();
 	}

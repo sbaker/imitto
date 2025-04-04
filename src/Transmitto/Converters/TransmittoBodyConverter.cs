@@ -4,23 +4,19 @@ using Transmitto.Net.Models;
 
 namespace Transmitto.Converters;
 
-public class TransmittoBodyConverter : JsonConverter<TransmittoMessageBody>
+public class TransmittoBodyConverter<TBody> : JsonConverter<TBody> where TBody : TransmittoMessageBody, new()
 {
-	public override TransmittoMessageBody? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override TBody? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var result = new TransmittoMessageBody();
+		var jsonDocument = JsonDocument.ParseValue(ref reader);
 
-		if (reader.TokenType == JsonTokenType.StartObject)
-		{
-			var jsonDocument = JsonDocument.ParseValue(ref reader);
-
-			result.RawBody = jsonDocument.RootElement.ToString();
-		}
+		var result = jsonDocument.Deserialize<TBody>() ?? new();
+		result.RawBody = jsonDocument.RootElement.ToString();
 
 		return result;
 	}
 
-	public override void Write(Utf8JsonWriter writer, TransmittoMessageBody value, JsonSerializerOptions options)
+	public override void Write(Utf8JsonWriter writer, TBody value, JsonSerializerOptions options)
 	{
 		var type = value.GetType();
 		var properties = type.GetProperties();
@@ -29,9 +25,14 @@ public class TransmittoBodyConverter : JsonConverter<TransmittoMessageBody>
 
 		foreach (var property in properties)
 		{
-			writer.WritePropertyName(property.Name);
-			
-			writer.WriteStringValue(property.GetValue(value)?.ToString());
+			var propertyValue = property.GetValue(value)?.ToString();
+
+			if (value is not null)
+			{
+				writer.WritePropertyName(property.Name);
+
+				writer.WriteStringValue(propertyValue);
+			}
 		}
 
 		writer.WriteEndObject();

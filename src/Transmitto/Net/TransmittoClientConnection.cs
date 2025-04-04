@@ -77,13 +77,24 @@ public class TransmittoClientConnection : TransmittoConnection, ITransmittoClien
 		{
 			Header = new()
 			{
-				Path = "/topics"
+				Path = "/topics",
+				Action = TransmittoEventType.Consume
 			},
 			Body = new()
 			{
-				Topics = [.. Options.TypeMappings.Keys.Distinct()],
+				//var topics =Options.TypeMappings.Keys.Distinct()
+				Topics = new TopicRegistrationModel
+				{
+					PublishTopics = ["topic-1-test"],
+					SubscriptionTopics = ["topic-2-test"],
+				}
 			}
 		}, token);
+		
+		while (!token.IsCancellationRequested && !_transmittoSocket.DataAvailable)
+		{
+			await Task.Delay(200, token);
+		}
 
 		var response = await _transmittoSocket.ReadResponseAsync<EventNotificationsResponse>(token);
 
