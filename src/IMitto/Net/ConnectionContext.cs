@@ -1,14 +1,15 @@
-﻿using IMitto.Server;
+﻿using IMitto.Net.Server;
 
 namespace IMitto.Net;
 
 public class ConnectionContext : Disposable
 {
+	private Task? _backgroudTask;
+
 	public ConnectionContext(IEventAggregator eventAggregator, MittoSocket socket, CancellationToken token)
 	{
 		EventAggregator = eventAggregator;
 		Socket = socket;
-		CancellationToken = token;
 
 		token.Register(Dispose);
 
@@ -21,9 +22,17 @@ public class ConnectionContext : Disposable
 	
 	public MittoSocket Socket { get; }
 
-	public CancellationToken CancellationToken { get; set; }
-
-	public Task? BackgroundTask { get; set; }
+	public Task BackgroundTask// { get; set; }
+	{
+		get
+		{
+			return _backgroudTask ?? Task.CompletedTask;
+		}
+		set
+		{
+			_backgroudTask = value;
+		}
+	}
 
 	protected override void DisposeCore()
 	{

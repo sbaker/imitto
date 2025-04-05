@@ -1,6 +1,6 @@
 ﻿using IMitto.Net.Models;
 
-namespace IMitto.Net;
+namespace IMitto.Net.Clients;
 
 public interface IMittoClientConnection : IMittoConnection
 {

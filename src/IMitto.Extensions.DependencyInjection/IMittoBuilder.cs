@@ -1,6 +1,7 @@
 ﻿using IMitto.Net.Settings;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace IMitto.Extensions.DependencyInjection
 {
 	public interface IMittoBuilder
 	{

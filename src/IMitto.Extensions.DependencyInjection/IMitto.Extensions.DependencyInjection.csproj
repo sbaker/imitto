@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IMitto\IMitto.csproj" />
-    <ProjectReference Include="..\IMitto.Server\IMitto.Server.csproj" />
+    <!--<ProjectReference Include="..\IMitto.Server\IMitto.Server.csproj" />-->
   </ItemGroup>
 
 

@@ -1,0 +1,16 @@
+﻿namespace IMitto.Net.Server;
+
+public interface IMittoServer : IDisposable
+{
+	MittoServerOptions Options { get; }
+
+	string Name { get; }
+
+	bool Started { get; }
+
+	Task StartAsync(CancellationToken? token = null);
+
+	Task RunAsync(CancellationToken token = default);
+
+	Task StopAsync(CancellationToken token = default);
+}

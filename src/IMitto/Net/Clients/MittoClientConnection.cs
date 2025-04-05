@@ -1,10 +1,9 @@
 ﻿using System.Net.Sockets;
-using IMitto.Net.Clients;
 using IMitto.Net.Models;
 using IMitto.Net.Requests;
 using IMitto.Net.Responses;
 
-namespace IMitto.Net;
+namespace IMitto.Net.Clients;
 
 public class MittoClientConnection : MittoConnection, IMittoClientConnection
 {

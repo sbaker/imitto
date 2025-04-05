@@ -1,4 +1,5 @@
 ﻿using IMitto.Consumers;
+using IMitto.Extensions.DependencyInjection;
 using IMitto.Net.Clients;
 using IMitto.Net.Settings;
 using IMitto.Producers;

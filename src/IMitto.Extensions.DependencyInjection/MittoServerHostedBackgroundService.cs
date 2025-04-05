@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
-using IMitto.Server;
+using IMitto.Net.Server;
 
 namespace IMitto.Extensions.DependencyInjection;
 

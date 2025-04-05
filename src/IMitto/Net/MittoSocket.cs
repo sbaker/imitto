@@ -75,6 +75,7 @@ public class MittoSocket : IDisposable
 		_writer.Dispose();
 		_reader.Dispose();
 
+		_tcpClient.Close();
 		_tcpClient.Dispose();
 
 		GC.SuppressFinalize(this);

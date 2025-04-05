@@ -14,7 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\IMitto.Server\IMitto.Server.csproj" />
+    <ProjectReference Include="..\..\src\IMitto\IMitto.csproj" />
+    <!--<ProjectReference Include="..\..\src\IMitto.Server\IMitto.Server.csproj" />-->
     <ProjectReference Include="..\..\src\IMitto.Extensions.DependencyInjection\IMitto.Extensions.DependencyInjection.csproj" />
   </ItemGroup>
 

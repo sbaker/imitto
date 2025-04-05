@@ -1,7 +1,6 @@
 ﻿using System.Net.Sockets;
-using IMitto.Net.Server;
 
-namespace IMitto.Net;
+namespace IMitto.Net.Server;
 
 public class SingleMittoServerConnection : MittoServerConnection
 {

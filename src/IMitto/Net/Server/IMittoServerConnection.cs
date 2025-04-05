@@ -1,5 +1,4 @@
-﻿
-namespace IMitto.Net;
+﻿namespace IMitto.Net.Server;
 
 public interface IMittoServerConnection : IMittoConnection
 {

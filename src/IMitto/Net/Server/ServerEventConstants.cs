@@ -1,4 +1,4 @@
-﻿namespace IMitto.Server;
+﻿namespace IMitto.Net.Server;
 
 public static class ServerEventConstants
 {
