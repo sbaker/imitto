@@ -22,7 +22,8 @@ internal sealed class ConcurrentDictionarySubscriptionRepository : SubscriptionR
         && subscriptions.Remove(subscription);
 
 	/// <inheritdoc />
-	public sealed override IEnumerable<ISubscription> GetAll(Guid eventAggregatorId) => Subscriptions.Values.SelectMany(x => x);
+	public sealed override IEnumerable<ISubscription> GetAll(Guid eventAggregatorId)
+        => Subscriptions.Values.SelectMany(x => x.Where(s => s.EventAggregatorId == eventAggregatorId));
 
 	/// <inheritdoc />
 	public sealed override IReadOnlyList<ISubscription> Get(Guid eventAggregatorId, EventId eventId)

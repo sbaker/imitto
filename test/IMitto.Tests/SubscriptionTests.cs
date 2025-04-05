@@ -9,7 +9,7 @@ public class SubscriptionTests
 	{
 		string[] data = ["String1", "String2"];
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
@@ -24,7 +24,7 @@ public class SubscriptionTests
 		int[] invalidData = [1, 2];
 		string[] data = ["String1", "String2"];
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
@@ -38,7 +38,7 @@ public class SubscriptionTests
 	{
 		string[] data = ["String1", "String2"];
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
@@ -54,7 +54,7 @@ public class SubscriptionTests
 	{
 		string[] data = ["String1", "String2"];
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		var sub = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
@@ -68,7 +68,7 @@ public class SubscriptionTests
 	{
 		string[] data = ["String1", "String2"];
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		var sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list => throw new Exception());
 
@@ -85,7 +85,7 @@ public class SubscriptionTests
 	{
 		string[] data = ["String1", "String2"];
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		var sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list => {
 			// Should never get here
@@ -109,7 +109,7 @@ public class SubscriptionTests
 	{
 		string[] data = ["String1", "String2"];
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		ISubscription sub1;
 		ISubscription sub2;
@@ -136,7 +136,7 @@ public class SubscriptionTests
 	{
 		string[] data = { "String1", "String2" };
 
-		var aggregator = new EventAggregator();
+		var aggregator = new MittoEvents();
 
 		var sub = aggregator.Subscribe("my-strings", c => { });
 
@@ -148,7 +148,7 @@ public class SubscriptionTests
 	{
 		string[] data = { "String1", "String2" };
 
-		var aggregator = new LocalEventAggregator();
+		var aggregator = new MittoLocalEvents();
 
 
 		var sub = aggregator.Subscribe("my-strings",

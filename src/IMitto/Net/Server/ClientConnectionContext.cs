@@ -4,7 +4,7 @@ namespace IMitto.Net.Server;
 
 public class ClientConnectionContext
 {
-	public ClientConnectionContext(ConnectionContext connection, Task eventLoopTask)
+	public ClientConnectionContext(ConnectionContext connection, Task eventLoopTask, CancellationToken token)
 	{
 		Connection = connection;
 		EventLoopTask = eventLoopTask;

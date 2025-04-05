@@ -4,21 +4,23 @@ using IMitto.Net.Models;
 using IMitto.Net.Settings;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using Opt = Microsoft.Extensions.Options.Options;
 
 namespace IMitto.Net.Clients;
 
-public interface IMittoClientEventManager : ILocalEventAggregator
+public interface IMittoClientEventManager : IMittoLocalEvents
 {
 	Task HandleClientEventReceived(EventNotificationsModel clientEvent, CancellationToken token);
 }
 
-public class MittoClientEventManager : LocalEventAggregator, IMittoClientEventManager
+public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManager
 {
 	private readonly MittoClientOptions _options;
 	private readonly IServiceProvider _serviceProvider;
 	private readonly ConcurrentDictionary<string, TopicPackageTypeMapping> _topicTypeMappings;
 
 	public MittoClientEventManager(IOptions<MittoClientOptions> options, IServiceProvider serviceProvider)
+		: base(Opt.Create(options.Value.Events))
 	{
 		_options = options.Value;
 		_serviceProvider = serviceProvider;

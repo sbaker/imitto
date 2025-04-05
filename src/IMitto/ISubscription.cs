@@ -13,7 +13,7 @@ public interface ISubscription : IDisposable
 	EventId EventId { get; }
 
 	/// <summary>
-	/// Gets the <see cref="IEventAggregator" identifier associated with this <see cref="ISubscription"/>.
+	/// Gets the <see cref="IMittoEvents" identifier associated with this <see cref="ISubscription"/>.
 	/// </summary>
 	Guid? EventAggregatorId { get; set; }
 
@@ -23,13 +23,13 @@ public interface ISubscription : IDisposable
 	Guid SubscriptionId { get; set; }
 
 	/// <summary>
-	/// Unsubscribes this instance from the <see cref="IEventAggregator"/> which disposes this subscription prevents any further invocations.
+	/// Unsubscribes this instance from the <see cref="IMittoEvents"/> which disposes this subscription prevents any further invocations.
 	/// </summary>
 	/// <returns></returns>
 	bool Unsubscribe();
 
 	/// <summary>
-	/// Publishes the specified data to the <see cref="IEventAggregator"/>.
+	/// Publishes the specified data to the <see cref="IMittoEvents"/>.
 	/// </summary>
 	void Publish<T>(T data);
 

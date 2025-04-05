@@ -10,6 +10,7 @@ using IMitto.Net.Server;
 using IMitto.Net.Settings;
 using IMitto.Local;
 using IMitto.Storage;
+using Microsoft.Extensions.Options;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.DependencyInjection;
@@ -17,15 +18,18 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
-	public static IServiceCollection AddLocalEvents(this IServiceCollection services)
+	public static IServiceCollection AddLocalEvents(this IServiceCollection services, Action<MittoEventsOptions>? configure = null)
 	{
-		return services.AddEvents<LocalEventAggregator>();
+		return services.AddLocalEvents<MittoLocalEvents>(configure)
+			.AddSingleton<IMittoEvents>(s => s.GetRequiredService<IMittoLocalEvents>());
 	}
 
-	public static IServiceCollection AddEvents<TEventAggregator>(this IServiceCollection services)
-		where TEventAggregator : class, IEventAggregator
+	public static IServiceCollection AddLocalEvents<TEventAggregator>(this IServiceCollection services, Action<MittoEventsOptions>? configure = null)
+		where TEventAggregator : class, IMittoLocalEvents
 	{
-		return services.AddSingleton<IEventAggregator, TEventAggregator>();
+		configure ??= options => { };
+		return services.Configure(configure)
+			.AddSingleton<IMittoLocalEvents, TEventAggregator>();
 	}
 
 	public static IServiceCollection AddIMittoChannels<TChannelModel>(this IServiceCollection services, Action<MittoBoundedChannelOptions> configure)

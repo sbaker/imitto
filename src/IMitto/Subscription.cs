@@ -1,6 +1,6 @@
 ﻿namespace IMitto;
 
-public abstract class Subscription(EventId eventId, IEventAggregator aggregator) : Disposable, ISubscription
+public abstract class Subscription(EventId eventId, IMittoEvents aggregator) : Disposable, ISubscription
 {
 	private Guid? _id = null;
 
@@ -8,7 +8,7 @@ public abstract class Subscription(EventId eventId, IEventAggregator aggregator)
 
 	public EventId EventId { get; protected set; } = eventId;
 
-	protected IEventAggregator Aggregator { get; } = aggregator;
+	protected IMittoEvents Aggregator { get; } = aggregator;
 
 	public bool Released { get; protected set; }
 
@@ -37,15 +37,15 @@ public abstract class Subscription(EventId eventId, IEventAggregator aggregator)
 		InvokeCore(context);
 	}
 
-	protected abstract void InvokeCore(EventContext context);
-
 	protected override void DisposeCore()
 	{
-		if (!Released)
+		if (Aggregator.Options.SubscribersUnsubscribeOnDispose)
 		{
 			Unsubscribe();
 		}
 	}
+
+	protected abstract void InvokeCore(EventContext context);
 
 	protected void Increment()
 	{

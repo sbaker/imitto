@@ -5,13 +5,14 @@ using IMitto.Net.Settings;
 
 namespace IMitto.Net;
 
-public class MittoSocket : IDisposable
+public class MittoSocket : Disposables
 {
 	private readonly Encoding _encoding;
 	private readonly IMittoConnection _parent;
 	private readonly JsonSerializerOptions _options;
 	private readonly StreamReader _reader;
 	private readonly TcpClient _tcpClient;
+	private readonly NetworkStream _networkStream;
 	private readonly StreamWriter _writer;
 
 	public MittoSocket(IMittoConnection parent, TcpClient tcpClient, MittoBaseOptions options)
@@ -19,18 +20,20 @@ public class MittoSocket : IDisposable
 		var stream = tcpClient.GetStream();
 
 		_parent = parent;
-		_tcpClient = tcpClient;
+
+		_tcpClient = Add(tcpClient, tcpClient.Close);
+		_networkStream = Add(stream);
+
+		_reader = Add(new StreamReader(stream));
+		_writer = Add(new StreamWriter(stream));
 
 		_encoding = options.Encoding;
 		_options = options.Json.Serializer;
-
-		_reader = new StreamReader(stream);
-		_writer = new StreamWriter(stream);
 	}
 
-	public bool IsConnected => _tcpClient.Connected;
+	public bool IsConnected => _tcpClient.Client.Connected;
 
-	public bool DataAvailable => _tcpClient.Connected && _tcpClient.Available > 0;
+	public bool DataAvailable => IsConnected && _networkStream.DataAvailable;
 
 	public Task<TMessage?> ReadRequestAsync<TMessage>(CancellationToken token = default) where TMessage : IMittoMessage
 		=> ReadAsync<TMessage>(token);
@@ -68,16 +71,5 @@ public class MittoSocket : IDisposable
 		await _writer.WriteLineAsync(mittoMessage);
 		//_writer.Write(0x1A);
 		await _writer.FlushAsync(token);
-	}
-
-	public void Dispose()
-	{
-		_writer.Dispose();
-		_reader.Dispose();
-
-		_tcpClient.Close();
-		_tcpClient.Dispose();
-
-		GC.SuppressFinalize(this);
 	}
 }

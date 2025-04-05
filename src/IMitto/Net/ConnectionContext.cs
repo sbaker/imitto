@@ -6,7 +6,7 @@ public class ConnectionContext : Disposable
 {
 	private Task? _backgroudTask;
 
-	public ConnectionContext(IEventAggregator eventAggregator, MittoSocket socket, CancellationToken token)
+	public ConnectionContext(IMittoEvents eventAggregator, MittoSocket socket, CancellationToken token)
 	{
 		EventAggregator = eventAggregator;
 		Socket = socket;
@@ -18,7 +18,7 @@ public class ConnectionContext : Disposable
 
 	public string ConnectionId { get; } = Guid.NewGuid().ToString();
 
-	public IEventAggregator EventAggregator { get; }
+	public IMittoEvents EventAggregator { get; }
 	
 	public MittoSocket Socket { get; }
 
@@ -37,6 +37,10 @@ public class ConnectionContext : Disposable
 	protected override void DisposeCore()
 	{
 		Socket.Dispose();
-		BackgroundTask?.Wait();
+
+		if (!BackgroundTask.IsCompleted)
+		{
+			BackgroundTask?.Wait();
+		}
 	}
 }

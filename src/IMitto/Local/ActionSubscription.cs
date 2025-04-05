@@ -1,6 +1,6 @@
 ﻿namespace IMitto.Local;
 
-public sealed class ActionSubscription(EventId eventId, IEventAggregator aggregator, Action<EventContext> callback) : DelegateSubscription<Action<EventContext>>(eventId, aggregator, callback)
+public sealed class ActionSubscription(EventId eventId, IMittoEvents aggregator, Action<EventContext> callback) : DelegateSubscription<Action<EventContext>>(eventId, aggregator, callback)
 {
 	protected override void InvokeCore(EventContext context)
 	{
@@ -8,7 +8,7 @@ public sealed class ActionSubscription(EventId eventId, IEventAggregator aggrega
 	}
 }
 
-public class ActionSubscription<TData>(EventId eventId, IEventAggregator aggregator, Action<EventContext<TData>> callback) : DelegateSubscription<Action<EventContext<TData>>>(eventId, aggregator, callback)
+public class ActionSubscription<TData>(EventId eventId, IMittoEvents aggregator, Action<EventContext<TData>> callback) : DelegateSubscription<Action<EventContext<TData>>>(eventId, aggregator, callback)
 {
 	private static readonly Type DataType = typeof(TData);
 

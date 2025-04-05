@@ -6,22 +6,23 @@ using IMitto.Extensions;
 using IMitto.Net;
 using IMitto.Net.Responses;
 using IMitto.Local;
+using Microsoft.Extensions.Options;
 
 namespace IMitto.Net.Server;
 
-public sealed class ServerEventManager : LocalEventAggregator, IServerEventManager
+public sealed class ServerEventManager : MittoLocalEvents, IServerEventManager
 {
 	private readonly ConcurrentBag<ClientConnectionContext> _connections = [];
-
 	private readonly ILogger<ServerEventManager> _logger;
 	private readonly IMittoEventListener _eventListener;
 	private readonly IMittoChannelProvider<ConnectionContext> _channelProvider;
 
 	public ServerEventManager(
+		IOptions<MittoEventsOptions> options,
 		ILogger<ServerEventManager> logger,
 		IMittoEventListener eventListener,
 		IMittoChannelProvider<ConnectionContext> channelProvider)
-		: base()
+		: base(options)
 	{
 		_logger = logger;
 		_eventListener = eventListener;
@@ -46,7 +47,7 @@ public sealed class ServerEventManager : LocalEventAggregator, IServerEventManag
 					{
 						var connection = await channelReader.ReadAsync(token);
 						var eventLoopTask = _eventListener.PollForEventsAsync(connection, token);
-						_connections.Add(new ClientConnectionContext(connection, eventLoopTask));
+						_connections.Add(new ClientConnectionContext(connection, eventLoopTask, token));
 					}
 				});
 			}
@@ -66,7 +67,7 @@ public sealed class ServerEventManager : LocalEventAggregator, IServerEventManag
 
 	public Task PublishServerEventAsync<TData>(EventId eventId, ConnectionContext context, TData data, CancellationToken token)
 	{
-		if (!Repository.TryGet(EventAggregatorId, eventId, out var subscriptions))
+		if (!Repository.TryGet(MittoEventsId, eventId, out var subscriptions))
 		{
 			return Task.CompletedTask;
 		}

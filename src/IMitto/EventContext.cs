@@ -1,12 +1,12 @@
 ﻿namespace IMitto;
 
-public class EventContext(EventId eventId, IEventAggregator aggregator)
+public class EventContext(EventId eventId, IMittoEvents aggregator)
 {
 	private readonly object? _data = null;
 
 	public EventId EventId { get; } = eventId;
 
-	public IEventAggregator Aggregator { get; } = aggregator;
+	public IMittoEvents Aggregator { get; } = aggregator;
 
 	public virtual Type GetDataType() => _data?.GetType() ?? typeof(object);
 
@@ -16,7 +16,7 @@ public class EventContext(EventId eventId, IEventAggregator aggregator)
 	}
 }
 
-public class EventContext<T>(EventId eventId, IEventAggregator aggregator, T data) : EventContext(eventId, aggregator)
+public class EventContext<T>(EventId eventId, IMittoEvents aggregator, T data) : EventContext(eventId, aggregator)
 {
 	private static readonly Type DataType = typeof(T);
 

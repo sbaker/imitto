@@ -4,9 +4,9 @@ namespace IMitto;
 
 public static class Subscribe
 {
-	private static IEventAggregator _aggregator = new EventAggregator();
+	private static IMittoEvents _aggregator = new MittoEvents();
 
-	public static IEventAggregator UseAggregator(IEventAggregator aggregator, bool disposeExisting = true)
+	public static IMittoEvents UseAggregator(IMittoEvents aggregator, bool disposeExisting = true)
 	{
 		var existing = Interlocked.Exchange(ref _aggregator, aggregator);
 

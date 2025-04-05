@@ -1,20 +1,30 @@
 ﻿using IMitto.Extensions;
 using IMitto.Local.Storage.Internal;
 using IMitto.Storage;
+using Microsoft.Extensions.Options;
+using Opt = Microsoft.Extensions.Options.Options;
 
 namespace IMitto;
 
-public class EventAggregator(Guid? id = null, ISubscriptionRepository? repository = null) : Disposable, IEventAggregator
+public class MittoEvents(IOptions<MittoEventsOptions> options, ISubscriptionRepository? repository = null) : Disposable, IMittoEvents
 {
-	private Guid? _id = id;
+	public MittoEvents() : this(Opt.Create(new MittoEventsOptions()))
+	{
+	}
 
-	public Guid EventAggregatorId { get => _id ??= Guid.CreateVersion7(); set => _id = value; }
+	private readonly MittoEventsOptions _options = options.Value;
+
+	private Guid? _id = null;
+
+	public Guid MittoEventsId { get => _id ??= Guid.CreateVersion7(); set => _id = value; }
 
 	protected ISubscriptionRepository Repository { get; } = repository ?? SubscriberDefaults.InMemoryRepository;
 
+	public MittoEventsOptions Options => _options;
+
 	public virtual void Publish<TData>(EventId eventId, TData data)
 	{
-		if (!Repository.TryGet(EventAggregatorId, eventId, out var subscriptions))
+		if (!Repository.TryGet(MittoEventsId, eventId, out var subscriptions))
 		{
 			return;
 		}
@@ -44,7 +54,7 @@ public class EventAggregator(Guid? id = null, ISubscriptionRepository? repositor
 		return true;
 	}
 
-	public ISubscription Subscribe(EventId eventId, Func<IEventAggregator, EventId, ISubscription> factory)
+	public ISubscription Subscribe(EventId eventId, Func<IMittoEvents, EventId, ISubscription> factory)
 	{
 		ThrowIfDisposed();
 
@@ -58,7 +68,7 @@ public class EventAggregator(Guid? id = null, ISubscriptionRepository? repositor
 		return Task.Run(() => SubscribeCore(subscription));
 	}
 
-	public virtual async Task<ISubscription> SubscribeAsync(EventId eventId, Func<IEventAggregator, EventId, CancellationToken, Task<ISubscription>> factory, CancellationToken token)
+	public virtual async Task<ISubscription> SubscribeAsync(EventId eventId, Func<IMittoEvents, EventId, CancellationToken, Task<ISubscription>> factory, CancellationToken token)
 	{
 		ThrowIfDisposed();
 
@@ -82,10 +92,10 @@ public class EventAggregator(Guid? id = null, ISubscriptionRepository? repositor
 
 		if (!subscription.EventAggregatorId.HasValue)
 		{
-			subscription.EventAggregatorId = EventAggregatorId;
+			subscription.EventAggregatorId = MittoEventsId;
 		}
 
-		if (subscription.EventAggregatorId != EventAggregatorId)
+		if (subscription.EventAggregatorId != MittoEventsId)
 		{
 			throw new InvalidOperationException($"Subscription {subscription.SubscriptionId}");
 		}
@@ -112,7 +122,7 @@ public class EventAggregator(Guid? id = null, ISubscriptionRepository? repositor
 
 	private void DisposeSubscriptions()
 	{
-		var subscriptions = Repository.GetAll(EventAggregatorId).ToArray();
+		var subscriptions = Repository.GetAll(MittoEventsId).ToArray();
 
 		for (int i = 0; i < subscriptions.Length; i++)
 		{

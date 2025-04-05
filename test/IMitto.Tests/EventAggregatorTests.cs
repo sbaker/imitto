@@ -10,7 +10,7 @@ namespace IMitto.Tests;
             // Arrange
             var eventId = EventId.New("TestEvent");
             var data = "Test Data";
-            var eventAggregator = new EventAggregator();
+            var eventAggregator = new MittoEvents();
             var subscription = eventAggregator.Subscribe(eventId, context =>
             {
                 Assert.Equal(data, context.GetData());
