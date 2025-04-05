@@ -6,10 +6,11 @@ using IMitto.Extensions;
 using IMitto.Net;
 using IMitto.Net.Responses;
 using IMitto.Net.Server;
+using IMitto.Local;
 
 namespace IMitto.Server;
 
-public sealed class ServerEventManager : EventAggregator, IServerEventManager
+public sealed class ServerEventManager : LocalEventAggregator, IServerEventManager
 {
 	private readonly ConcurrentBag<ClientConnectionContext> _connections = [];
 
@@ -17,7 +18,11 @@ public sealed class ServerEventManager : EventAggregator, IServerEventManager
 	private readonly IMittoEventListener _eventListener;
 	private readonly IMittoChannelProvider<ConnectionContext> _channelProvider;
 
-	public ServerEventManager(ILogger<ServerEventManager> logger, IMittoEventListener eventListener, IMittoChannelProvider<ConnectionContext> channelProvider) : base(SubscriberDefaults.InMemory)
+	public ServerEventManager(
+		ILogger<ServerEventManager> logger,
+		IMittoEventListener eventListener,
+		IMittoChannelProvider<ConnectionContext> channelProvider)
+		: base()
 	{
 		_logger = logger;
 		_eventListener = eventListener;
@@ -62,7 +67,7 @@ public sealed class ServerEventManager : EventAggregator, IServerEventManager
 
 	public Task PublishServerEventAsync<TData>(EventId eventId, ConnectionContext context, TData data, CancellationToken token)
 	{
-		if (!Repository.TryGet(eventId, out var subscriptions))
+		if (!Repository.TryGet(EventAggregatorId, eventId, out var subscriptions))
 		{
 			return Task.CompletedTask;
 		}
@@ -75,6 +80,6 @@ public sealed class ServerEventManager : EventAggregator, IServerEventManager
 			{
 				subscription.Invoke(eventContext);
 			}
-		});
+		}, token);
 	}
 }

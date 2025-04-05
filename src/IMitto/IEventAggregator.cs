@@ -1,16 +1,20 @@
 ﻿namespace IMitto;
 
-    public interface IEventAggregator : IDisposable, IAsyncDisposable
-    {
-        ISubscription Subscribe(EventId eventId, Action<EventContext> callback);
+public interface IEventAggregator : IDisposable, IAsyncDisposable
+{
+	Guid EventAggregatorId { get; set; }
 
-        ISubscription Subscribe<TData>(EventId eventId, Action<EventContext<TData>> callback);
+	bool Subscribe(ISubscription subscription);
 
-        ISubscription Subscribe(EventId eventId, Func<IEventAggregator, EventId, ISubscription> registerFactory);
+	ISubscription Subscribe(EventId eventId, Func<IEventAggregator, EventId, ISubscription> factory);
 
-        bool Unsubscribe(ISubscription subscription);
+	Task<ISubscription> SubscribeAsync(ISubscription subscription);
 
-        void Publish<TData>(EventId eventId, TData data);
+	Task<ISubscription> SubscribeAsync(EventId eventId, Func<IEventAggregator, EventId, CancellationToken, Task<ISubscription>> factory, CancellationToken token);
 
-        Task PublishAsync<TData>(EventId eventId, TData data);
-  }
+	bool Unsubscribe(ISubscription subscription);
+
+	void Publish<TData>(EventId eventId, TData data);
+
+	Task PublishAsync<TData>(EventId eventId, TData data);
+}

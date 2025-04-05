@@ -7,7 +7,7 @@ namespace IMitto.Server;
 
 public class NullAuthenticationHandler(ILogger<NullAuthenticationHandler> logger) : IMittoAuthenticationHandler
 {
-	public Task<TopicAuthorizationResult> AuthorizeTopicAccess(ConnectionContext context, TransmittoTopicsRequest message)
+	public Task<TopicAuthorizationResult> AuthorizeTopicAccess(ConnectionContext context, MittoTopicsRequest message)
 	{
 		logger.LogTrace("Authorized");
 		return Task.FromResult(TopicAuthorizationResult.Success);

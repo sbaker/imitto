@@ -1,6 +1,6 @@
 ﻿namespace IMitto.Net.Models;
 
-public class ClientNotificationBody : TransmittoMessageBody
+public class ClientNotificationBody : MittoMessageBody
 {
 	public ClientNotificationModel Notification { get; set; }
 }

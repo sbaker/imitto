@@ -5,7 +5,7 @@
         [Fact]
         public void EventSubscriptionTest()
         {
-            using (var subscription = Subscribe.To<string>("eventId", s => Assert.True(s.Data == "Event raised.")))
+            using (var subscription = Subscribe.ToLocalEvent<string>("eventId", s => Assert.True(s.Data == "Event raised.")))
             {
                 subscription.Publish("Event raised.");
 

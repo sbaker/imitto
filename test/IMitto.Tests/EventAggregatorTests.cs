@@ -1,3 +1,5 @@
+using IMitto.Local;
+
 namespace IMitto.Tests;
 
     public class EventAggregatorTests

@@ -8,5 +8,5 @@ public class EventNotification
 
 	public string Topic { get; set; }
 
-	public TransmittoEvent Event { get; set; }
+	public MittoEvent Event { get; set; }
 }

@@ -4,7 +4,12 @@ public abstract class Disposable : IDisposable
 {
 	private bool _disposed;
 
-	protected bool Disposed => _disposed;
+	public bool Disposed => _disposed;
+
+	protected void ThrowIfDisposed()
+	{
+		ObjectDisposedException.ThrowIf(Disposed, GetType());
+	}
 
 	protected abstract void DisposeCore();
 

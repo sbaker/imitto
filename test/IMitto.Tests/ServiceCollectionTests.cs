@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
+using IMitto.Local;
 
 namespace IMitto.Tests;
 

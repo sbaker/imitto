@@ -4,7 +4,7 @@ namespace IMitto.Server;
 
 public interface IMittoServer : IDisposable
 {
-	TransmittoServerOptions Options { get; }
+	MittoServerOptions Options { get; }
 
 	string Name { get; }
 

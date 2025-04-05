@@ -2,7 +2,7 @@
 
 namespace IMitto.Net.Requests;
 
-public class ClientNotificationRequest : TransmittoRequest<ClientNotificationBody>
+public class ClientNotificationRequest : MittoRequest<ClientNotificationBody>
 {
 	public ClientNotificationRequest()
 	{

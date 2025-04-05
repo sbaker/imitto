@@ -10,19 +10,19 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["samples/TransmittoSampleClient1/TransmittoSampleClient1.csproj", "samples/TransmittoSampleClient1/"]
-RUN dotnet restore "./samples/TransmittoSampleClient1/TransmittoSampleClient1.csproj"
+COPY ["samples/MittoSampleClient1/MittoSampleClient1.csproj", "samples/MittoSampleClient1/"]
+RUN dotnet restore "./samples/MittoSampleClient1/MittoSampleClient1.csproj"
 COPY . .
-WORKDIR "/src/samples/TransmittoSampleClient1"
-RUN dotnet build "./TransmittoSampleClient1.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/samples/MittoSampleClient1"
+RUN dotnet build "./MittoSampleClient1.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TransmittoSampleClient1.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./MittoSampleClient1.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "TransmittoSampleClient1.dll"]
+ENTRYPOINT ["dotnet", "MittoSampleClient1.dll"]

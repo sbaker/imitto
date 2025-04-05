@@ -12,13 +12,13 @@ public interface IMittoEventListener
 	Task PollForEventsAsync(ConnectionContext context, CancellationToken token);
 }
 
-public class TransmittoEventListener : IMittoEventListener
+public class MittoEventListener : IMittoEventListener
 {
-	private readonly ILogger<TransmittoEventListener> _logger;
-	private readonly TransmittoConnectionOptions _options;
+	private readonly ILogger<MittoEventListener> _logger;
+	private readonly MittoConnectionOptions _options;
 	private readonly IMittoChannelWriterProvider<ClientNotificationModel> _channelWriter;
 
-	public TransmittoEventListener(ILogger<TransmittoEventListener> logger, IOptions<TransmittoConnectionOptions> options, IMittoChannelWriterProvider<ClientNotificationModel> channelWriter)
+	public MittoEventListener(ILogger<MittoEventListener> logger, IOptions<MittoConnectionOptions> options, IMittoChannelWriterProvider<ClientNotificationModel> channelWriter)
 	{
 		_logger = logger;
 		_options = options.Value;

@@ -4,17 +4,17 @@ namespace IMitto.Net;
 
 public interface IMittoMessage
 {
-	TransmittoHeader Header { get; set; }
+	MittoHeader Header { get; set; }
 
 	bool HasBody();
 
-	TransmittoMessageBody GetBody();
+	MittoMessageBody GetBody();
 
-	TBody GetBody<TBody>() where TBody : notnull, TransmittoMessageBody;
+	TBody GetBody<TBody>() where TBody : notnull, MittoMessageBody;
 }
-public interface IMittoMessage<TBody> where TBody : TransmittoMessageBody
+public interface IMittoMessage<TBody> where TBody : MittoMessageBody
 {
 	TBody Body { get; set; }
 
-	TransmittoHeader Header { get; set; }
+	MittoHeader Header { get; set; }
 }

@@ -1,6 +1,6 @@
 ﻿namespace IMitto.Net.Models;
 
-public class EventNotificationsBody : TransmittoMessageBody<EventNotificationsModel>
+public class EventNotificationsBody : MittoMessageBody<EventNotificationsModel>
 {
 	
 }

@@ -1,29 +1,31 @@
 ﻿namespace IMitto;
 
-    public class EventContext(EventId eventId, IEventAggregator aggregator)
-    {
-        public EventId EventId { get; } = eventId;
+public class EventContext(EventId eventId, IEventAggregator aggregator)
+{
+	private readonly object? _data = null;
 
-        public IEventAggregator Aggregator { get; } = aggregator;
+	public EventId EventId { get; } = eventId;
 
-        public virtual Type GetDataType() => typeof(object);
+	public IEventAggregator Aggregator { get; } = aggregator;
 
-        public virtual object? GetData()
-        {
-            return null;
-        }
-    }
+	public virtual Type GetDataType() => _data?.GetType() ?? typeof(object);
 
-    public class EventContext<T>(EventId eventId, IEventAggregator aggregator, T data) : EventContext(eventId, aggregator)
-    {
-        private static readonly Type DataType = typeof(T);
+	public virtual object? GetData()
+	{
+		return _data;
+	}
+}
 
-        public T Data { get; } = data;
+public class EventContext<T>(EventId eventId, IEventAggregator aggregator, T data) : EventContext(eventId, aggregator)
+{
+	private static readonly Type DataType = typeof(T);
 
-        public override Type GetDataType() => DataType;
+	public T Data { get; } = data;
 
-        public override object? GetData()
-        {
-            return Data;
-        }
-    }
+	public override Type GetDataType() => DataType;
+
+	public override object? GetData()
+	{
+		return Data;
+	}
+}

@@ -19,8 +19,8 @@ builder.Logging.AddSimpleConsole(logging => {
 	logging.UseUtcTimestamp = true;
 });
 
-builder.Services.AddTransmittoServer(options => {
-	options.Name = "transmitto-test-server";
+builder.Services.AddIMittoServer(options => {
+	options.Name = "imitto-test-server";
 });
 
 var app =  builder.Build();

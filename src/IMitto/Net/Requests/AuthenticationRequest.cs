@@ -1,9 +1,9 @@
 ﻿using IMitto.Net.Models;
 namespace IMitto.Net.Requests;
 
-public class AuthenticationRequest : TransmittoRequest<TransmittoAuthenticationMessageBody>
+public class AuthenticationRequest : MittoRequest<MittoAuthenticationMessageBody>
 {
-	public AuthenticationRequest(TransmittoAuthenticationMessageBody? body = null, TransmittoHeader? header = null)
+	public AuthenticationRequest(MittoAuthenticationMessageBody? body = null, MittoHeader? header = null)
 		: base(body ?? new(), header ?? [])
 	{
 	}

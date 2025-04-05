@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using IMitto.Consumers;
+using IMittoSampleClient1;
 
 var builder = Host.CreateApplicationBuilder();
 
@@ -12,26 +12,18 @@ builder.Logging.AddJsonConsole(options => {
 	options.IncludeScopes = true;
 });
 
-builder.Services.AddTransmitto(configure =>
-	configure.AddConsumer<TestMessageHandler, TestMessage>("testing-topic")
-	.Configure(options => {
-		options.AuthenticationKey = builder.Configuration.GetValue<string>("TestKey");
-		options.AuthenticationSecret = builder.Configuration.GetValue<string>("TestSecret");
-	}));
+var topic = "testing-topic";
+var mittoKey = "MittoAuthenticationKey";
+var mittoSecretKey = "MittoAuthenticationSecret";
+
+builder.Services.AddIMitto(configure =>
+	configure.AddConsumer<TestPackageConsumer, TestPackage>(topic)
+		.Configure(options => {
+			options.AuthenticationKey = builder.Configuration.GetValue<string>(mittoKey);
+			options.AuthenticationSecret = builder.Configuration.GetValue<string>(mittoSecretKey);
+		})
+		.AddProducer<TestPackageProducer, TestPackage>(topic));
 
 var host = builder.Build();
 
 host.Run();
-
-public class TestMessageHandler : IMittoMessageConsumer<TestMessage>
-{
-	public Task<MessageConsumptionResult> ConsumeAsync(TestMessage message)
-	{
-		throw new NotImplementedException();
-	}
-}
-
-public class TestMessage
-{
-	public string Message { get; set; }
-}

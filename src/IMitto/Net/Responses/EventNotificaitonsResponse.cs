@@ -2,9 +2,9 @@
 
 namespace IMitto.Net.Responses;
 
-public class EventNotificationsResponse : TransmittoResponse<EventNotificationsBody>
+public class EventNotificationsResponse : MittoResponse<EventNotificationsBody>
 {
-	public EventNotificationsResponse(EventNotificationsBody? body = null, TransmittoHeader? header = null)
+	public EventNotificationsResponse(EventNotificationsBody? body = null, MittoHeader? header = null)
 		: base(body ?? new(), header ?? [])
 	{
 	}

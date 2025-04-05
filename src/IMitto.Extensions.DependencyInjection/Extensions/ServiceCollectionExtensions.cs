@@ -8,6 +8,9 @@ using IMitto.Net.Clients;
 using IMitto.Net.Models;
 using IMitto.Net.Server;
 using IMitto.Server;
+using IMitto.Net.Settings;
+using IMitto.Local;
+using IMitto.Storage;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.DependencyInjection;
@@ -17,7 +20,7 @@ public static class ServiceCollectionExtensions
 {
 	public static IServiceCollection AddLocalEvents(this IServiceCollection services)
 	{
-		return services.AddEvents<EventAggregator>();
+		return services.AddEvents<LocalEventAggregator>();
 	}
 
 	public static IServiceCollection AddEvents<TEventAggregator>(this IServiceCollection services)
@@ -26,67 +29,82 @@ public static class ServiceCollectionExtensions
 		return services.AddSingleton<IEventAggregator, TEventAggregator>();
 	}
 
-	public static IServiceCollection AddChannels<TChannelModel>(this IServiceCollection services, Action<TransmittoBoundedChannelOptions> configure)
+	public static IServiceCollection AddIMittoChannels<TChannelModel>(this IServiceCollection services, Action<MittoBoundedChannelOptions> configure)
 	{
 		services.Configure(configure);
 		services.TryAddSingleton<IMittoChannelReaderProvider<TChannelModel>>(
 			s => s.GetRequiredService<IMittoChannelProvider<TChannelModel>>());
 		services.TryAddSingleton<IMittoChannelWriterProvider<TChannelModel>>(
 			s => s.GetRequiredService<IMittoChannelProvider<TChannelModel>>());
-		services.TryAddSingleton<IMittoChannelProvider<TChannelModel>, TransmittoBoundedChannelProvider<TChannelModel>>();
+		services.TryAddSingleton<IMittoChannelProvider<TChannelModel>, MittoBoundedChannelProvider<TChannelModel>>();
 		return services;
 	}
 
-	public static IServiceCollection AddTransmitto(this IServiceCollection services, Action<IMittoBuilder> configure)
+	public static IServiceCollection AddIMitto(this IServiceCollection services, Action<IMittoBuilder> configure)
 	{
-		var builder = new TransmittoBuilder(services);
+		var builder = new MittoBuilder(services);
 
 		configure(builder);
 
 		return builder.Build()
-			.AddChannels<EventNotificationsModel>(_ => { })
-			.AddSingleton<IMittoEventDispatcher, ChannelTransmittoEventDispatcher>();
+			.AddIMittoChannels<EventNotificationsModel>(_ => { })
+			.AddSingleton<IMittoClientEventManager, MittoClientEventManager>()
+			.AddSingleton<IMittoEventDispatcher, ChannelMittoEventDispatcher>();
 	}
 
-	public static IServiceCollection AddTransmittoServer(this IServiceCollection services, Action<TransmittoServerOptions>? configure = null)
+	public static IServiceCollection AddIMittoServer(this IServiceCollection services, Action<MittoServerOptions>? configure = null)
 	{
 		return services.Configure(configure ??= options => { })
-			.AddChannels<ConnectionContext>(options => {
+			.AddIMittoChannels<ConnectionContext>(options => {
 				options.ChannelFullMode = BoundedChannelFullMode.Wait;
 			})
-			.AddChannels<ClientNotificationModel>(options => {
+			.AddIMittoChannels<ClientNotificationModel>(options => {
 				options.ChannelFullMode = BoundedChannelFullMode.Wait;
 			})
-			.AddHostedService<TransmittoServerHostedBackgroundService>()
-			.AddSingleton(p => SubscriberDefaults.InMemory)
+			.AddHostedService<MittoServerHostedBackgroundService>()
 			.AddSingleton<IServerEventManager, ServerEventManager>()
-			.AddSingleton<IMittoRequestHandler, TransmittoServerRequestHandler>()
-			.AddSingleton<IMittoEventListener, TransmittoEventListener>()
+			.AddSingleton<IMittoRequestHandler, MittoServerRequestHandler>()
+			.AddSingleton<IMittoEventListener, MittoEventListener>()
 			.AddSingleton<IMittoAuthenticationHandler, NullAuthenticationHandler>()
-			.AddSingleton<IMittoServer, TransmittoServer>();
+			.AddSingleton<IMittoServer, MittoServer>();
 	}
 
-	internal class TransmittoBuilder(IServiceCollection services) : IMittoBuilder
+	public static IServiceCollection AddIMittoServer<TRepository>(this IServiceCollection services, Action<MittoServerOptions>? configure = null)
+		where TRepository : class, ISubscriptionRepository
 	{
-		private Dictionary<string, Type> _mappings = new();
+		return services.AddIMittoServer(configure)
+			.AddSingleton<ISubscriptionRepository, TRepository>();
+	}
+
+	internal class MittoBuilder(IServiceCollection services) : IMittoBuilder
+	{
+		private readonly Dictionary<string, TopicPackageTypeMapping> _mappings = [];
 
 		public IServiceCollection Services { get; } = services;
 
-		public void AddTopicTypeMapping<TMapping>(string topic) where TMapping : class
+		public void AddTopicTypeMapping<TMapping>(string topic, TopicMappingType mappingType) where TMapping : class
 		{
-			_mappings.Add(topic, typeof(TMapping));
+			TopicPackageTypeMapping? typeMapping = null;
+
+			if (_mappings.TryGetValue(topic, out var value))
+			{
+				typeMapping = value;
+				typeMapping.MappingType |= mappingType;
+			}
+
+			_mappings[topic] = typeMapping ?? new TopicPackageTypeMapping(typeof(TMapping), topic, mappingType);
 		}
 
 		public IServiceCollection Build()
 		{
-			return Services.Configure<TransmittoClientOptions>(options => {
+			return Services.Configure<MittoClientOptions>(options => {
 				foreach (var mapping in _mappings)
 				{
 					options.TypeMappings.AddOrUpdate(mapping.Key, mapping.Value, (s, t) => mapping.Value);
 				}
 			})
-			.AddHostedService<TransmittoClientHostedBackgroundService>()
-			.AddSingleton<IMittoClient, TransmittoClient>();
+			.AddHostedService<MittoClientHostedBackgroundService>()
+			.AddSingleton<IMittoClient, MittoClient>();
 		}
 	}
 }

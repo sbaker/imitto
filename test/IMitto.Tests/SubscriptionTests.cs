@@ -1,160 +1,162 @@
-﻿namespace IMitto.Tests;
+﻿using IMitto.Local;
 
-    public class SubscriptionTests
-    {
-        [Fact]
-        public void SubscribeToStringEventIdTest()
-        {
-            string[] data = ["String1", "String2"];
+namespace IMitto.Tests;
 
-            var aggregator = new EventAggregator();
+public class SubscriptionTests
+{
+	[Fact]
+	public void SubscribeToStringEventIdTest()
+	{
+		string[] data = ["String1", "String2"];
 
-            var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
+		var aggregator = new EventAggregator();
 
-            aggregator.Publish("my-strings", data);
+		var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
-            Assert.True(sub.Unsubscribe());
-        }
+		aggregator.Publish("my-strings", data);
 
-        [Fact]
-        public void SubscribeToThrowsWithInvalidDataStringEventIdTest()
-        {
-            int[] invalidData = [1, 2];
-            string[] data = ["String1", "String2"];
+		Assert.True(sub.Unsubscribe());
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void SubscribeToThrowsWithInvalidDataStringEventIdTest()
+	{
+		int[] invalidData = [1, 2];
+		string[] data = ["String1", "String2"];
 
-            var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
+		var aggregator = new EventAggregator();
 
-            Assert.Throws<ArgumentException>(() => aggregator.Publish("my-strings", invalidData));
+		var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
-            Assert.True(sub.Unsubscribe());
-        }
+		Assert.Throws<ArgumentException>(() => aggregator.Publish("my-strings", invalidData));
 
-        [Fact]
-        public void SubscribeToIncrementsInvocationWhenRaisedStringEventIdTest()
-        {
-            string[] data = ["String1", "String2"];
+		Assert.True(sub.Unsubscribe());
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void SubscribeToIncrementsInvocationWhenRaisedStringEventIdTest()
+	{
+		string[] data = ["String1", "String2"];
 
-            var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
+		var aggregator = new EventAggregator();
 
-            aggregator.Publish("my-strings", data);
+		var sub = aggregator.Subscribe<IEnumerable<string>>("my-strings", list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
-            Assert.Equal(1, sub.Invocations);
+		aggregator.Publish("my-strings", data);
 
-            Assert.True(sub.Unsubscribe());
-        }
+		Assert.Equal(1, sub.Invocations);
 
-        [Fact]
-        public void SubscribeToIntEventIdTest()
-        {
-            string[] data = ["String1", "String2"];
+		Assert.True(sub.Unsubscribe());
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void SubscribeToIntEventIdTest()
+	{
+		string[] data = ["String1", "String2"];
 
-            var sub = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
+		var aggregator = new EventAggregator();
 
-            aggregator.Publish(1, data);
+		var sub = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
-            Assert.True(sub.Unsubscribe());
-        }
+		aggregator.Publish(1, data);
 
-        [Fact]
-        public void MultipleSubscribeToIntEventIdTest()
-        {
-            string[] data = ["String1", "String2"];
+		Assert.True(sub.Unsubscribe());
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void MultipleSubscribeToIntEventIdTest()
+	{
+		string[] data = ["String1", "String2"];
 
-            var sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list => throw new Exception());
+		var aggregator = new EventAggregator();
 
-            var sub2 = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
+		var sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list => throw new Exception());
 
-            aggregator.Publish(1, data);
+		var sub2 = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
-            Assert.True(sub1.Unsubscribe());
-            Assert.True(sub2.Unsubscribe());
-        }
+		aggregator.Publish(1, data);
 
-        [Fact]
-        public void MultipleSubscribeToUnsubscribeStringEventIdTest()
-        {
-            string[] data = ["String1", "String2"];
+		Assert.True(sub1.Unsubscribe());
+		Assert.True(sub2.Unsubscribe());
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void MultipleSubscribeToUnsubscribeStringEventIdTest()
+	{
+		string[] data = ["String1", "String2"];
 
-            var sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list =>
-            {
-                // Should never get here
-                throw new Exception();
-            });
+		var aggregator = new EventAggregator();
 
-            var sub2 = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
+		var sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list => {
+			// Should never get here
+			throw new Exception();
+		});
 
-            Assert.True(sub1.Unsubscribe());
+		var sub2 = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
 
-            // Should not throw an Exception here since we unsubscribed above.
-            aggregator.Publish("asdf", data);
+		Assert.True(sub1.Unsubscribe());
 
-            aggregator.Publish(1, data);
+		// Should not throw an Exception here since we unsubscribed above.
+		aggregator.Publish("asdf", data);
 
-            Assert.True(sub2.Unsubscribe());
-        }
+		aggregator.Publish(1, data);
 
-        [Fact]
-        public void SubscribeToDisposeUnsubscribesStringAndIntEventIdTest()
-        {
-            string[] data = ["String1", "String2"];
+		Assert.True(sub2.Unsubscribe());
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void SubscribeToDisposeUnsubscribesStringAndIntEventIdTest()
+	{
+		string[] data = ["String1", "String2"];
 
-            ISubscription sub1;
-            ISubscription sub2;
+		var aggregator = new EventAggregator();
 
-            using (sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list => { throw new Exception(); }))
-            {
-                sub2 = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
-            }
+		ISubscription sub1;
+		ISubscription sub2;
 
-            // Should not throw an Exception here since we disposed of the subscription above.
-            aggregator.Publish("asdf", data);
+		using (sub1 = aggregator.Subscribe<IEnumerable<string>>("asdf", list => { throw new Exception(); }))
+		{
+			sub2 = aggregator.Subscribe<IEnumerable<string>>(1, list => Assert.All(list.Data, s => Assert.Contains(s, data)));
+		}
 
-            Assert.True(((Subscription)sub1).Released);
+		// Should not throw an Exception here since we disposed of the subscription above.
+		aggregator.Publish("asdf", data);
 
-            aggregator.Publish(1, data);
+		Assert.True(((Subscription)sub1).Released);
 
-            sub2.Dispose();
+		aggregator.Publish(1, data);
 
-            Assert.True(((Subscription)sub2).Released);
-        }
+		sub2.Dispose();
 
-        [Fact]
-        public void SubscribeWithParameterlessHandlerTest()
-        {
-            string[] data = { "String1", "String2" };
+		Assert.True(((Subscription)sub2).Released);
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void SubscribeWithParameterlessHandlerTest()
+	{
+		string[] data = { "String1", "String2" };
 
-            var sub = aggregator.Subscribe("my-strings", c => { });
+		var aggregator = new EventAggregator();
 
-            Assert.True(sub.Unsubscribe());
-        }
+		var sub = aggregator.Subscribe("my-strings", c => { });
 
-        [Fact]
-        public void SubscribeWithSubscriptionFactoryCreatesSubscriptionTest()
-        {
-            string[] data = { "String1", "String2" };
+		Assert.True(sub.Unsubscribe());
+	}
 
-            var aggregator = new EventAggregator();
+	[Fact]
+	public void SubscribeWithSubscriptionFactoryCreatesSubscriptionTest()
+	{
+		string[] data = { "String1", "String2" };
 
-            var sub = aggregator.Subscribe("my-strings",
-                (agg, id) => new ActionSubscription<IEnumerable<string>>(
-                    id,
-                    aggregator,
-                    c => Assert.NotEmpty(c.Data)));
+		var aggregator = new LocalEventAggregator();
 
-            Assert.True(sub.Unsubscribe());
-        }
-    }
+
+		var sub = aggregator.Subscribe("my-strings",
+			(agg, id) => new ActionSubscription<IEnumerable<string>>(
+				id,
+				aggregator,
+				c => Assert.NotEmpty(c.Data)));
+
+		Assert.True(sub.Unsubscribe());
+	}
+}

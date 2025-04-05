@@ -6,7 +6,7 @@ namespace IMitto.Server;
 
 public interface IMittoAuthenticationHandler
 {
-	Task<TopicAuthorizationResult> AuthorizeTopicAccess(ConnectionContext context, TransmittoTopicsRequest message);
+	Task<TopicAuthorizationResult> AuthorizeTopicAccess(ConnectionContext context, MittoTopicsRequest message);
 
 	Task<bool> HandleAuthenticationAsync(ConnectionContext context, CancellationToken token = default);
 }

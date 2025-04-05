@@ -2,7 +2,7 @@
 
 namespace IMitto.Channels
 {
-	public class TransmittoBoundedChannelOptions
+	public class MittoBoundedChannelOptions
 	{
 		public int Capacity { get; set; } = 8;
 

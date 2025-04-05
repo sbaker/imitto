@@ -4,11 +4,10 @@ namespace IMitto.Net;
 
 public class ConnectionContext : Disposable
 {
-	public ConnectionContext(IEventAggregator eventAggregator, TransmittoSocket socket, IMittoEventListener eventListener, CancellationToken token)
+	public ConnectionContext(IEventAggregator eventAggregator, MittoSocket socket, CancellationToken token)
 	{
 		EventAggregator = eventAggregator;
 		Socket = socket;
-		EventListener = eventListener;
 		CancellationToken = token;
 
 		token.Register(Dispose);
@@ -20,9 +19,7 @@ public class ConnectionContext : Disposable
 
 	public IEventAggregator EventAggregator { get; }
 	
-	public TransmittoSocket Socket { get; }
-
-	public IMittoEventListener EventListener { get; private set; }
+	public MittoSocket Socket { get; }
 
 	public CancellationToken CancellationToken { get; set; }
 

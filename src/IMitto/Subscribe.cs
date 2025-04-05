@@ -1,4 +1,6 @@
-﻿namespace IMitto;
+﻿using IMitto.Local;
+
+namespace IMitto;
 
 public static class Subscribe
 {
@@ -16,7 +18,7 @@ public static class Subscribe
 		return existing;
 	}
 
-	public static ISubscription To<TData>(EventId eventId, Action<EventContext<TData>> callback)
+	public static ISubscription ToLocalEvent<TData>(EventId eventId, Action<EventContext<TData>> callback)
 	{
 		return _aggregator.Subscribe(eventId, callback);
 	}

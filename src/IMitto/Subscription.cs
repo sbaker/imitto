@@ -2,6 +2,10 @@
 
 public abstract class Subscription(EventId eventId, IEventAggregator aggregator) : Disposable, ISubscription
 {
+	private Guid? _id = null;
+
+	public Guid SubscriptionId { get => _id ??= Guid.CreateVersion7(); set => _id = value; }
+
 	public EventId EventId { get; protected set; } = eventId;
 
 	protected IEventAggregator Aggregator { get; } = aggregator;
@@ -9,6 +13,8 @@ public abstract class Subscription(EventId eventId, IEventAggregator aggregator)
 	public bool Released { get; protected set; }
 
 	public int Invocations { get; protected set; }
+
+	public Guid? EventAggregatorId { get; set; }
 
 	public bool Unsubscribe()
 	{
@@ -44,15 +50,5 @@ public abstract class Subscription(EventId eventId, IEventAggregator aggregator)
 	protected void Increment()
 	{
 		Invocations++;
-	}
-}
-
-public class Subscription<TCallback>(EventId eventId, IEventAggregator aggregator, TCallback callback) : Subscription(eventId, aggregator) where TCallback : Delegate
-{
-	protected TCallback Callback { get; } = callback;
-
-	protected override void InvokeCore(EventContext context)
-	{
-		Callback.DynamicInvoke(context);
 	}
 }
