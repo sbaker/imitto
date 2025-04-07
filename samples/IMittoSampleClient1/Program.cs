@@ -22,7 +22,7 @@ builder.Services.AddIMitto(configure =>
 			options.AuthenticationKey = builder.Configuration.GetValue<string>(mittoKey);
 			options.AuthenticationSecret = builder.Configuration.GetValue<string>(mittoSecretKey);
 		})
-		.AddProducer<TestPackageProducer, TestPackage>(topic));
+		.AddProducer<TestPackage>(topic));
 
 var host = builder.Build();
 

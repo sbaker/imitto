@@ -1,12 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Diagnostics.Tracing;
 using IMitto.Channels;
-using IMitto.Extensions;
-using IMitto.Net;
-using IMitto.Net.Responses;
 using IMitto.Local;
 using Microsoft.Extensions.Options;
+using IMitto.Settings;
 
 namespace IMitto.Net.Server;
 
@@ -35,12 +32,10 @@ public sealed class ServerEventManager : MittoLocalEvents, IServerEventManager
 	{
 		TokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-		var startingTask = Task.Run(async () =>
-		{
+		var startingTask = Task.Run(async () => {
 			try
 			{
-				await Task.Run(async () =>
-				{
+				await Task.Run(async () => {
 					var channelReader = _channelProvider.GetReader();
 
 					while (await channelReader.WaitToReadAsync(token))

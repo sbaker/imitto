@@ -1,4 +1,4 @@
-﻿namespace IMitto;
+﻿namespace IMitto.Settings;
 
 public class MittoEventsOptions
 {

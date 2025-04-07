@@ -2,6 +2,7 @@
 using IMitto.Storage;
 using IMitto.Local.Storage.Internal;
 using Microsoft.Extensions.Options;
+using IMitto.Settings;
 
 namespace IMitto;
 

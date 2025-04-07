@@ -1,16 +1,12 @@
-﻿namespace IMitto.Net.Server;
+﻿using IMitto.Hosting;
 
-public interface IMittoServer : IDisposable
+namespace IMitto.Net.Server;
+
+public interface IMittoServer : IMittoHost
 {
 	MittoServerOptions Options { get; }
 
 	string Name { get; }
 
-	bool Started { get; }
-
-	Task StartAsync(CancellationToken? token = null);
-
-	Task RunAsync(CancellationToken token = default);
-
-	Task StopAsync(CancellationToken token = default);
+	bool Running { get; }
 }

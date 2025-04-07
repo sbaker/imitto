@@ -1,6 +1,7 @@
-﻿namespace IMitto.Net.Clients;
+﻿using IMitto.Hosting;
 
-public interface IMittoClient : IDisposable
+namespace IMitto.Net.Clients;
+
+public interface IMittoClient : IMittoRunnable
 {
-	Task RunAsync(CancellationToken token);
 }

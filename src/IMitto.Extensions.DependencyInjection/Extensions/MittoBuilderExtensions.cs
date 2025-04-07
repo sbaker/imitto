@@ -6,6 +6,7 @@ using IMitto.Producers;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.DependencyInjection;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 public static class MittoBuilderExtensions
 {
@@ -21,14 +22,13 @@ public static class MittoBuilderExtensions
 		return builder;
 	}
 
-	public static IMittoBuilder AddProducer<TProducer, TPackage>(this IMittoBuilder builder, string topic)
-		where TProducer : class, IMittoPackageProducer<TPackage>
+	public static IMittoBuilder AddProducer<TPackage>(this IMittoBuilder builder, string topic)
 		where TPackage : class
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(topic);
 
 		builder.AddTopicTypeMapping<TPackage>(topic, TopicMappingType.Producer);
-		builder.Services.AddTransient<IMittoPackageProducer<TPackage>, TProducer>();
+		builder.Services.AddTransient<IMittoProducerProvider<TPackage>, MittoProducerProvider<TPackage>>();
 
 		return builder;
 	}

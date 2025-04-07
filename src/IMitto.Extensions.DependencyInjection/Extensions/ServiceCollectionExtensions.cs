@@ -11,6 +11,7 @@ using IMitto.Net.Settings;
 using IMitto.Local;
 using IMitto.Storage;
 using Microsoft.Extensions.Options;
+using IMitto.Settings;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.DependencyInjection;

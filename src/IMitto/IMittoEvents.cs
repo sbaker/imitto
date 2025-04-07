@@ -1,4 +1,6 @@
-﻿namespace IMitto;
+﻿using IMitto.Settings;
+
+namespace IMitto;
 
 public interface IMittoEvents : IDisposable, IAsyncDisposable
 {

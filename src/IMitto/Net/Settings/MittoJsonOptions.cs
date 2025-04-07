@@ -11,7 +11,6 @@ public class MittoJsonOptions
 	{
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 		RespectNullableAnnotations = true,
-		//TypeInfoResolver = new MittoTypeInfoResolver(),
 		UnknownTypeHandling = JsonUnknownTypeHandling.JsonElement,
 		UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
 		DefaultIgnoreCondition = JsonIgnoreCondition.Never,

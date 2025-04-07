@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.IO.Pipelines;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using IMitto.Net.Settings;
@@ -8,18 +9,15 @@ namespace IMitto.Net;
 public class MittoSocket : Disposables
 {
 	private readonly Encoding _encoding;
-	private readonly IMittoConnection _parent;
 	private readonly JsonSerializerOptions _options;
 	private readonly StreamReader _reader;
 	private readonly TcpClient _tcpClient;
 	private readonly NetworkStream _networkStream;
 	private readonly StreamWriter _writer;
 
-	public MittoSocket(IMittoConnection parent, TcpClient tcpClient, MittoBaseOptions options)
+	public MittoSocket(TcpClient tcpClient, MittoBaseOptions options)
 	{
 		var stream = tcpClient.GetStream();
-
-		_parent = parent;
 
 		_tcpClient = Add(tcpClient, tcpClient.Close);
 		_networkStream = Add(stream);
@@ -47,7 +45,7 @@ public class MittoSocket : Disposables
 	public Task SendRequestAsync<TMessage>(TMessage request, CancellationToken token = default) where TMessage : IMittoMessage
 		=> SendAsync(request, token);
 
-	public async Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default) where TMessage : IMittoMessage
+	public virtual async Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default) where TMessage : IMittoMessage
 	{
 		var requestRaw = await _reader.ReadLineAsync(token);
 
@@ -62,7 +60,7 @@ public class MittoSocket : Disposables
 		);
 	}
 
-	public async Task SendAsync<TMessage>(TMessage message, CancellationToken token = default) where TMessage : IMittoMessage
+	public virtual async Task SendAsync<TMessage>(TMessage message, CancellationToken token = default) where TMessage : IMittoMessage
 	{
 		ArgumentNullException.ThrowIfNull(message);
 

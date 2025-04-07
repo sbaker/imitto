@@ -18,7 +18,7 @@ public class SingleMittoServerConnection : MittoServerConnection
 
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;
 		tcpClient.SendTimeout = connectionOptions.ConnectionTimeout;
-		return new MittoSocket(this, tcpClient, Options);
+		return new MittoSocket(tcpClient, Options);
 	}
 
 	public override Task ConnectAsync(CancellationToken token = default)
@@ -31,7 +31,7 @@ public class SingleMittoServerConnection : MittoServerConnection
 		return _listener.Server.Connected;
 	}
 
-	protected override void Disposing()
+	protected override void DisposeCore()
 	{
 		_listener.Stop();
 		_listener.Dispose();

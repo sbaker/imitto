@@ -57,7 +57,7 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;
 		tcpClient.SendTimeout = connectionOptions.ConnectionTimeout;
 
-		_mittoSocket = new MittoSocket(this, tcpClient, Options);
+		_mittoSocket = new MittoSocket(tcpClient, Options);
 	}
 
 	public override bool IsConnected()
@@ -108,7 +108,7 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 		return null!;
 	}
 
-	protected override void Disposing()
+	protected override void DisposeCore()
 	{
 		_mittoSocket?.Dispose();
 	}

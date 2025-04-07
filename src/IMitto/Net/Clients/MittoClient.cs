@@ -1,60 +1,40 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using IMitto.Net.Models;
+using IMitto.Hosting;
 
 namespace IMitto.Net.Clients;
 
-public class MittoClient : IMittoClient
+public class MittoClient : MittoHost, IMittoClient
 {
-	private bool _disposedValue;
 	private readonly MittoClientOptions _options;
 	private readonly IMittoEventDispatcher _eventDispatcher;
 	private readonly ILogger<MittoClient> _logger;
-
+	
+	private CancellationTokenSource _tokenSource;
+	
 	public MittoClient(
 		IOptions<MittoClientOptions> options,
 		ILogger<MittoClient> logger,
-		IMittoEventDispatcher eventDispatcher)
+		IMittoEventDispatcher eventDispatcher) : base(logger)
 	{
 		_logger = logger;
 		_options = options.Value;
 		_eventDispatcher = eventDispatcher;
 	}
 
-	protected CancellationTokenSource? TokenSource { get; set; }
-
 	protected IMittoClientConnection? Connection { get; set; }
 
-	protected virtual void Dispose(bool disposing)
-	{
-		if (!_disposedValue)
-		{
-			if (disposing)
-			{
-				TokenSource?.Dispose();
-				Connection?.Dispose();
-			}
+	//public async Task RunAsync(CancellationToken token = default)
+	//{
+	//	_tokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-			_disposedValue = true;
-		}
-	}
-
-	public void Dispose()
-	{
-		Dispose(disposing: true);
-		GC.SuppressFinalize(this);
-	}
-
-	public async Task RunAsync(CancellationToken token = default)
-	{
-		TokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
-
-		await RunInternalAsync(TokenSource.Token);
+	//	await RunInternalAsync(_tokenSource.Token);
 		
-		Connection?.Dispose();
-	}
+	//	Connection?.Dispose();
+	//}
 
-	protected Task RunInternalAsync(CancellationToken token)
+	protected override Task RunInternalAsync(CancellationToken token)
 	{
 		return Task.Run(async () =>
 		{

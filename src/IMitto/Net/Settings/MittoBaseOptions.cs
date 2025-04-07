@@ -1,13 +1,21 @@
-﻿using System.Net;
+﻿using IMitto.Settings;
+using System.Net;
 using System.Text;
 
 namespace IMitto.Net.Settings;
 
 public abstract class MittoBaseOptions
 {
+	protected MittoBaseOptions()
+	{
+		Pipeline = new MittoPipeOptions(this);
+	}
+
+	public MittoPipeOptions Pipeline { get; set; }
+
 	public MittoConnectionOptions Connection { get; } = new MittoConnectionOptions()
 	{
-		Host = new MittoHost(IPAddress.Loopback)
+		Host = new MittoHostOptions(IPAddress.Loopback)
 	};
 
 	public Encoding Encoding { get; set; } = Encoding.UTF8;

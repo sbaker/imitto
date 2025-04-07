@@ -1,5 +1,5 @@
-﻿using IMitto.Extensions;
-using IMitto.Local.Storage.Internal;
+﻿using IMitto.Local.Storage.Internal;
+using IMitto.Settings;
 using IMitto.Storage;
 using Microsoft.Extensions.Options;
 using Opt = Microsoft.Extensions.Options.Options;
