@@ -31,9 +31,5 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Pipelines - Copy\" />
-  </ItemGroup>
-
+  
 </Project>

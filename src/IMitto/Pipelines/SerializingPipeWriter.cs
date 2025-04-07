@@ -1,4 +1,4 @@
-﻿using IMitto.Net.Settings;
+﻿using IMitto.Settings;
 using System.IO.Pipelines;
 
 namespace IMitto.Pipelines;

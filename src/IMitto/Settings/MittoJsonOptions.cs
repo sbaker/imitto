@@ -3,7 +3,7 @@ using System.Text.Json;
 using IMitto.Converters;
 using IMitto.Net.Models;
 
-namespace IMitto.Net.Settings;
+namespace IMitto.Settings;
 
 public class MittoJsonOptions
 {

@@ -1,4 +1,4 @@
-﻿using IMitto.Net.Settings;
+﻿using IMitto.Settings;
 using System.IO.Pipelines;
 using System.Net.Sockets;
 
@@ -6,17 +6,13 @@ namespace IMitto.Pipelines;
 
 public static class MittoPipe
 {
-	public static IDuplexPipe CreatePipe<T>(TcpClient client, MittoBaseOptions options)
+	public static IDuplexPipe CreatePipe<T>(TcpClient client, MittoOptions options)
 	{
 		return CreatePipe<T>(client.GetStream(), options);
 	}
 
-	public static IDuplexPipe CreatePipe<T>(NetworkStream stream, MittoBaseOptions options)
+	public static IDuplexPipe CreatePipe<T>(NetworkStream stream, MittoOptions options)
 	{
-		var pipeOptions = options.Pipeline.CreateReaderOptions();
-		var writerOptions = options.Pipeline.CreateWriterOptions();
-		var reader = CreateReader<T>(stream, pipeOptions);
-		var writer = PipeWriter.Create(stream, writerOptions);
 		return new MittoDuplexPipe(stream, options.Pipeline);
 	}
 

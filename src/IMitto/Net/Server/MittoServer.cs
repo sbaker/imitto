@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using IMitto.Net;
 using IMitto.Hosting;
 
 namespace IMitto.Net.Server;

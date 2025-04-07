@@ -1,9 +1,8 @@
-﻿using Microsoft.Extensions.Options;
-using System.IO.Pipelines;
+﻿using System.IO.Pipelines;
 using System.Text;
 using System.Text.Json;
 
-namespace IMitto.Net.Settings;
+namespace IMitto.Settings;
 
 public class MittoPipeOptions : PipeOptions
 {
@@ -16,7 +15,7 @@ public class MittoPipeOptions : PipeOptions
 
 	}
 
-	public MittoPipeOptions(MittoBaseOptions parentOptions)
+	public MittoPipeOptions(MittoOptions parentOptions)
 		: this(parentOptions.Json, parentOptions.Encoding)
 	{
 	}
@@ -37,14 +36,14 @@ public class MittoPipeOptions : PipeOptions
 
 	public Func<T, string> CreateDefaultWriterSerializer<T>()
 	{
-		return (T data) => {
+		return (data) => {
 			return JsonSerializer.Serialize(data, _jsonOptions.Serializer);
 		};
 	}
 
 	public Func<string, T> CreateDefaultReaderSerializer<T>()
 	{
-		return (string data) => {
+		return (data) => {
 			return JsonSerializer.Deserialize<T>(data, _jsonOptions.Serializer)!;
 		};
 	}

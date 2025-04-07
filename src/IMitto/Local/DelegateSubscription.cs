@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-
-namespace IMitto.Local;
+﻿namespace IMitto.Local;
 
 public class DelegateSubscription<TCallback>(EventId eventId, IMittoEvents aggregator, TCallback callback) : Subscription(eventId, aggregator) where TCallback : Delegate
 {

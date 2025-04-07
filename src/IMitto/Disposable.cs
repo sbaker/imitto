@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace IMitto;
+﻿namespace IMitto;
 
 public abstract class Disposable : IDisposable
 {

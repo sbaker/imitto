@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using System.Net;
 using IMitto.Channels;
-using IMitto.Net;
 using IMitto.Net.Models;
 using IMitto.Net.Requests;
 using IMitto.Net.Responses;
@@ -63,7 +62,7 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 		return message;
 	}
 
-	private async Task WaitForAuthenticationAsync(ConnectionContext context, CancellationToken token)
+	private protected async Task WaitForAuthenticationAsync(ConnectionContext context, CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
 
@@ -145,10 +144,5 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 		_logger.LogTrace("Writing response: start {connectionId}", context.ConnectionId);
 		await context.Socket.SendResponseAsync(response, token);
 		_logger.LogTrace("Writing response: end {connectionId}", context.ConnectionId);
-	}
-
-	public IMittoEventListener GetEventListener()
-	{
-		return _eventListener;
 	}
 }

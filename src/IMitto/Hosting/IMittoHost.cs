@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace IMitto.Hosting;
+﻿namespace IMitto.Hosting;
 
 public interface IMittoHost : IMittoRunnable
 {

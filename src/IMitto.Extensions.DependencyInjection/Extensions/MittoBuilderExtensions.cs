@@ -1,8 +1,8 @@
 ﻿using IMitto.Consumers;
 using IMitto.Extensions.DependencyInjection;
 using IMitto.Net.Clients;
-using IMitto.Net.Settings;
 using IMitto.Producers;
+using IMitto.Settings;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.DependencyInjection;
@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MittoBuilderExtensions
 {
-	public static IMittoBuilder AddConsumer<TConsumer, TPackage>(this IMittoBuilder builder, string topic)
+	public static IMittoClientBuilder AddConsumer<TConsumer, TPackage>(this IMittoClientBuilder builder, string topic)
 		where TConsumer : class, IMittoPackageConsumer<TPackage>
 		where TPackage : class
 	{
@@ -22,7 +22,7 @@ public static class MittoBuilderExtensions
 		return builder;
 	}
 
-	public static IMittoBuilder AddProducer<TPackage>(this IMittoBuilder builder, string topic)
+	public static IMittoClientBuilder AddProducer<TPackage>(this IMittoClientBuilder builder, string topic)
 		where TPackage : class
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(topic);
@@ -33,7 +33,7 @@ public static class MittoBuilderExtensions
 		return builder;
 	}
 
-	public static IMittoBuilder Configure(this IMittoBuilder builder, Action<MittoClientOptions> configure)
+	public static IMittoClientBuilder Configure(this IMittoClientBuilder builder, Action<MittoClientOptions> configure)
 	{
 		builder.Services.Configure(configure);
 		return builder;

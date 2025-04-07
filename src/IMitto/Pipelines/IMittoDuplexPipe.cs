@@ -1,8 +1,7 @@
-﻿namespace IMitto.Pipelines
+﻿namespace IMitto.Pipelines;
+
+public interface IMittoDuplexPipe<T>
 {
-	public interface IMittoDuplexPipe<T>
-	{
-		SerializingPipeReader<T> Reader { get; }
-		SerializingPipeWriter<T> Writer { get; }
-	}
+	SerializingPipeReader<T> Reader { get; }
+	SerializingPipeWriter<T> Writer { get; }
 }

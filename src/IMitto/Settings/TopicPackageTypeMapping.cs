@@ -1,4 +1,4 @@
-﻿namespace IMitto.Net.Settings;
+﻿namespace IMitto.Settings;
 
 public class TopicPackageTypeMapping(Type type, string topic, TopicMappingType mappingType)
 {

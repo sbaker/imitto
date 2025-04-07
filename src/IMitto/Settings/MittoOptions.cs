@@ -1,12 +1,11 @@
-﻿using IMitto.Settings;
-using System.Net;
+﻿using System.Net;
 using System.Text;
 
-namespace IMitto.Net.Settings;
+namespace IMitto.Settings;
 
-public abstract class MittoBaseOptions
+public class MittoOptions
 {
-	protected MittoBaseOptions()
+	public MittoOptions()
 	{
 		Pipeline = new MittoPipeOptions(this);
 	}

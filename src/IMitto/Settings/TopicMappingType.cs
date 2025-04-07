@@ -1,4 +1,4 @@
-﻿namespace IMitto.Net.Settings;
+﻿namespace IMitto.Settings;
 
 [Flags]
 public enum TopicMappingType

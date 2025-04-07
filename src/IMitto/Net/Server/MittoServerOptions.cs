@@ -1,8 +1,8 @@
-﻿using IMitto.Net.Settings;
+﻿using IMitto.Settings;
 
 namespace IMitto.Net.Server;
 
-public class MittoServerOptions : MittoBaseOptions
+public class MittoServerOptions : MittoOptions
 {
 	private static readonly string DefaultConnectionName = "imitto-server";
 

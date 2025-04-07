@@ -1,6 +1,4 @@
-﻿using IMitto.Producers;
-
-namespace IMittoSampleClient1;
+﻿namespace IMittoSampleClient1;
 
 //public class TestPackageProducer : IMittoPackageProducer<TestPackage>
 //{

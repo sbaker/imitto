@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace IMitto.Net.Settings;
+namespace IMitto.Settings;
 
 public class MittoHostOptions
 {

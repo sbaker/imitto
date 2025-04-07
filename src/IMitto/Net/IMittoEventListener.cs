@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using IMitto.Channels;
 using IMitto.Net.Models;
 using IMitto.Net.Requests;
-using IMitto.Net.Settings;
+using IMitto.Settings;
 
 namespace IMitto.Net;
 

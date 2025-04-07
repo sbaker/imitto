@@ -7,10 +7,8 @@ using IMitto.Net;
 using IMitto.Net.Clients;
 using IMitto.Net.Models;
 using IMitto.Net.Server;
-using IMitto.Net.Settings;
 using IMitto.Local;
 using IMitto.Storage;
-using Microsoft.Extensions.Options;
 using IMitto.Settings;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
@@ -44,7 +42,7 @@ public static class ServiceCollectionExtensions
 		return services;
 	}
 
-	public static IServiceCollection AddIMitto(this IServiceCollection services, Action<IMittoBuilder> configure)
+	public static IServiceCollection AddIMitto(this IServiceCollection services, Action<IMittoClientBuilder> configure)
 	{
 		var builder = new MittoBuilder(services);
 
@@ -80,7 +78,7 @@ public static class ServiceCollectionExtensions
 			.AddSingleton<ISubscriptionRepository, TRepository>();
 	}
 
-	internal class MittoBuilder(IServiceCollection services) : IMittoBuilder
+	internal class MittoBuilder(IServiceCollection services) : IMittoClientBuilder
 	{
 		private readonly Dictionary<string, TopicPackageTypeMapping> _mappings = [];
 

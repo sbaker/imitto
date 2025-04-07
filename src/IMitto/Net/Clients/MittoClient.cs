@@ -5,34 +5,16 @@ using IMitto.Hosting;
 
 namespace IMitto.Net.Clients;
 
-public class MittoClient : MittoHost, IMittoClient
+public class MittoClient(
+	IOptions<MittoClientOptions> options,
+	ILogger<MittoClient> logger,
+	IMittoEventDispatcher eventDispatcher) : MittoHost(logger), IMittoClient
 {
-	private readonly MittoClientOptions _options;
-	private readonly IMittoEventDispatcher _eventDispatcher;
-	private readonly ILogger<MittoClient> _logger;
-	
-	private CancellationTokenSource _tokenSource;
-	
-	public MittoClient(
-		IOptions<MittoClientOptions> options,
-		ILogger<MittoClient> logger,
-		IMittoEventDispatcher eventDispatcher) : base(logger)
-	{
-		_logger = logger;
-		_options = options.Value;
-		_eventDispatcher = eventDispatcher;
-	}
+	private readonly MittoClientOptions _options = options.Value;
+	private readonly IMittoEventDispatcher _eventDispatcher = eventDispatcher;
+	private readonly ILogger<MittoClient> _logger = logger;
 
 	protected IMittoClientConnection? Connection { get; set; }
-
-	//public async Task RunAsync(CancellationToken token = default)
-	//{
-	//	_tokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
-
-	//	await RunInternalAsync(_tokenSource.Token);
-		
-	//	Connection?.Dispose();
-	//}
 
 	protected override Task RunInternalAsync(CancellationToken token)
 	{
@@ -76,6 +58,8 @@ public class MittoClient : MittoHost, IMittoClient
 
 	protected async Task StartEventLoopAsync(IMittoClientConnection connection, MittoStatus response, CancellationToken token)
 	{
+		ArgumentNullException.ThrowIfNull(response, nameof(response));
+
 		var delayedTask = Task.Delay(20000, token).ContinueWith(task => {
 			// TODO: TESTCODE: Add code to publish an event after 20s.
 		}, token);

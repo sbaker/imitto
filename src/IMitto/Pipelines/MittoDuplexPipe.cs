@@ -1,30 +1,39 @@
-﻿using IMitto.Net.Settings;
+﻿using IMitto.Settings;
 using System.Buffers;
 using System.IO.Pipelines;
 
 namespace IMitto.Pipelines;
 
-public class MittoDuplexPipe(Stream stream, MittoPipeOptions options) : IDuplexPipe
+public class MittoDuplexPipe<T>(Stream readerStream, Stream writerStream, MittoPipeOptions options) : IDuplexPipe, IMittoDuplexPipe<T>
 {
-	private readonly char _terminator = (char)0x0A;
-	private readonly PipeReader _reader = PipeReader.Create(stream, options.CreateReaderOptions());
-	private readonly PipeWriter _writer = PipeWriter.Create(stream, options.CreateWriterOptions());
+	private readonly SerializingPipeReader<T> _reader = MittoPipe.CreateReader<T>(readerStream, options.CreateReaderOptions());
+	private readonly SerializingPipeWriter<T> _writer = MittoPipe.CreateWriter<T>(writerStream, options.CreateWriterOptions());
+
+	public MittoDuplexPipe(Stream stream, MittoPipeOptions options) : this(stream, stream, options)
+	{
+	}
 
 	public PipeReader Input => _reader;
 
 	public PipeWriter Output => _writer;
-}
 
-public class MittoDuplexPipe<T>(Stream stream, MittoPipeOptions options) : IDuplexPipe, IMittoDuplexPipe<T>
-{
-	private readonly SerializingPipeReader<T> _reader = MittoPipe.CreateReader<T>(stream, options.CreateReaderOptions());
-	private readonly SerializingPipeWriter<T> _writer = MittoPipe.CreateWriter<T>(stream, options.CreateWriterOptions());
-
-	PipeReader IDuplexPipe.Input => _reader;
 	public SerializingPipeReader<T> Reader => _reader;
 
-	PipeWriter IDuplexPipe.Output => _writer;
 	public SerializingPipeWriter<T> Writer => _writer;
+}
+
+public class MittoDuplexPipe(Stream readerStream, Stream writerStream, MittoPipeOptions options) : IDuplexPipe
+{
+	private readonly PipeReader _reader = PipeReader.Create(readerStream, options.CreateReaderOptions());
+	private readonly PipeWriter _writer = PipeWriter.Create(writerStream, options.CreateWriterOptions());
+
+	public MittoDuplexPipe(Stream stream, MittoPipeOptions options) : this(stream, stream, options)
+	{
+	}
+
+	public PipeReader Input => _reader;
+
+	public PipeWriter Output => _writer;
 }
 
 public readonly struct ReadResult<T>(ReadResult result, T value)

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
-using IMitto.Net.Settings;
+using IMitto.Settings;
 
 namespace IMitto.Net.Clients;
 
-public class MittoClientOptions : MittoBaseOptions
+public class MittoClientOptions : MittoOptions
 {
 	public string? AuthenticationSecret { get; set; }
 	

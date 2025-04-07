@@ -1,6 +1,4 @@
-﻿using IMitto.Net;
-
-namespace IMitto.Net.Server;
+﻿namespace IMitto.Net.Server;
 
 public class ClientConnectionContext
 {

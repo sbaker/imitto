@@ -1,4 +1,4 @@
-﻿using IMitto.Net.Settings;
+﻿using IMitto.Settings;
 using System.Buffers;
 using System.IO.Pipelines;
 
@@ -52,6 +52,7 @@ public class SerializingPipeReader<T> : PipeReader
 	{
 		T value = default!;
 
+		
 		while (true)
 		{
 			ReadResult result = await _innerReader.ReadAsync(token);
@@ -59,27 +60,40 @@ public class SerializingPipeReader<T> : PipeReader
 			SequencePosition? position = null;
 			var buffer = result.Buffer;
 
-			do
+			try
 			{
-				position = buffer.PositionOf(_options.CharTerminator);
-
-				if (position != null)
+				do
 				{
-					value = Serialize(buffer.Slice(0, position.Value))!;
-					buffer = buffer.Slice(buffer.GetPosition(1, position.Value));
+					position = buffer.PositionOf(_options.CharTerminator);
+
+					if (position != null)
+					{
+						value = Serialize(buffer.Slice(0, position.Value))!;
+						buffer = buffer.Slice(buffer.GetPosition(1, position.Value));
+
+						return value;
+					}
+				}
+				while (position != null);
+
+				// Tell the PipeReader how much of the buffer we have consumed
+				_innerReader.AdvanceTo(buffer.Start, buffer.End);
+
+				// Stop reading if there's no more data coming
+				if (result.IsCompleted)
+				{
+					if (buffer.Length > 0)
+					{
+						// The message is incomplete and there's no more data to process.
+						throw new InvalidDataException("Reader completed with incomplete message.");
+					}
 
 					break;
 				}
 			}
-			while (position != null);
-
-			// Tell the PipeReader how much of the buffer we have consumed
-			_innerReader.AdvanceTo(buffer.Start, buffer.End);
-
-			// Stop reading if there's no more data coming
-			if (result.IsCompleted)
+			finally
 			{
-				break;
+				_innerReader.AdvanceTo(buffer.Start, buffer.End);
 			}
 		}
 

@@ -1,8 +1,7 @@
-﻿using System.IO.Pipelines;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using IMitto.Net.Settings;
+using IMitto.Settings;
 
 namespace IMitto.Net;
 
@@ -15,7 +14,7 @@ public class MittoSocket : Disposables
 	private readonly NetworkStream _networkStream;
 	private readonly StreamWriter _writer;
 
-	public MittoSocket(TcpClient tcpClient, MittoBaseOptions options)
+	public MittoSocket(TcpClient tcpClient, MittoOptions options)
 	{
 		var stream = tcpClient.GetStream();
 

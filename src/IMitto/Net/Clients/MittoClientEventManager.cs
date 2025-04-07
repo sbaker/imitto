@@ -2,8 +2,8 @@
 using IMitto.Consumers;
 using IMitto.Local;
 using IMitto.Net.Models;
-using IMitto.Net.Settings;
 using IMitto.Producers;
+using IMitto.Settings;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using Opt = Microsoft.Extensions.Options.Options;
@@ -61,38 +61,9 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 			InvocationCount = 0;
 		}
 
-		public int InvocationCount { get; }
+		public int InvocationCount { get; } = 0;
 
 		public Task<PackagedGoods> InvokeProduceAsync(string topic) => Task.FromResult(
 			(PackagedGoods)PackagedGoods.From(topic, PackageProductionResult.Success("Message from client!")));
 	}
-}
-
-public record PackagedGoods<TGoods>(TGoods Product, string Topic) : PackagedGoods(typeof(TGoods), Product!, Topic);
-
-public record PackagedGoods
-{
-	public PackagedGoods(Type producType, object goods, string topic)
-	{
-		ProductType = producType;
-		ProductName = producType.Name;
-		Goods = goods;
-		Topic = topic;
-	}
-
-	public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-	public Type ProductType { get; }
-
-	public string ProductName { get; }
-
-	public string Topic { get; set; }
-
-	public object Goods { get; }
-
-	public static PackagedGoods<TGoods> From<TGoods>(string topic, PackageProductionResult<TGoods> packageProduction)
-		=> packageProduction.GetPackagedGoods(topic);
-
-	public static PackagedGoods From(string topic, PackageProductionResult packageProduction)
-		=> packageProduction.GetPackagedGoods(topic);
 }
