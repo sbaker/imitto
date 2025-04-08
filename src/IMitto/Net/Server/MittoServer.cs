@@ -4,7 +4,7 @@ using IMitto.Hosting;
 
 namespace IMitto.Net.Server;
 
-public sealed class MittoServer : MittoHost, IMittoServer
+public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 {
 	private Task? _startedTask = null;
 	private Task? _eventManagerTask = null;
@@ -16,20 +16,14 @@ public sealed class MittoServer : MittoHost, IMittoServer
 		IOptions<MittoServerOptions> options,
 		ILogger<MittoServer> logger,
 		IMittoRequestHandler requestHandler,
-		IServerEventManager serverEvents) : base(logger)
+		IServerEventManager serverEvents) : base(logger, options)
 	{
 		_logger = logger;
 		_requestHandler = requestHandler;
 		_eventManager = serverEvents;
-
-		Options = options.Value;
 	}
 
-	public bool Running => _startedTask != null && !_startedTask.IsCompleted;
-
 	private Task EventManagerTask => _eventManagerTask ?? Task.CompletedTask;
-
-	public MittoServerOptions Options { get; }
 
 	public string Name => Options.Name;
 
@@ -59,10 +53,10 @@ public sealed class MittoServer : MittoHost, IMittoServer
 			{
 				try
 				{
-					_logger.LogTrace("Accepting Connections: start");
-
 					while (!token.IsCancellationRequested)
 					{
+						_logger.LogTrace("Accepting Connections: start");
+
 						if (!Connection.IsConnected())
 						{
 							await Connection.ConnectAsync(TokenSource.Token);
@@ -70,21 +64,19 @@ public sealed class MittoServer : MittoHost, IMittoServer
 
 						var socket = await AcceptRequest(Connection, TokenSource.Token);
 
+						_logger.LogTrace("Accepting Connections: end;");
+
 						var context = new ConnectionContext(
 							_eventManager,
 							socket,
 							TokenSource.Token);
 
-						_logger.LogTrace("Connection Accepted: start {connectionId}", context.ConnectionId);
+						_logger.LogTrace("Initializing client/server workflow: start {connectionId}", context.ConnectionId);
 						
 						context.BackgroundTask = Task.Run(async () => {//.Factory.StartNew(async () => {
 							await _requestHandler.HandleRequestAsync(context, token).ConfigureAwait(false);
 						}, TokenSource.Token);
-
-						context.BackgroundTask.Start();
 					}
-
-					_logger.LogTrace("Accepting Connections: end; CancellationToken requested cancel");
 				}
 				catch (TaskCanceledException tce)
 				{

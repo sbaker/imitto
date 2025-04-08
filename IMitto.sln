@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{9239
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IMittoSampleClient1", "samples\IMittoSampleClient1\IMittoSampleClient1.csproj", "{534A100B-AC38-4350-8B16-D5F795D8A30A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IMittoSampleClient2", "samples\IMittoSampleClient2\IMittoSampleClient2.csproj", "{8DAF3B71-B037-14A6-F844-B2F398AEF777}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{534A100B-AC38-4350-8B16-D5F795D8A30A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{534A100B-AC38-4350-8B16-D5F795D8A30A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{534A100B-AC38-4350-8B16-D5F795D8A30A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DAF3B71-B037-14A6-F844-B2F398AEF777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DAF3B71-B037-14A6-F844-B2F398AEF777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DAF3B71-B037-14A6-F844-B2F398AEF777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DAF3B71-B037-14A6-F844-B2F398AEF777}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +60,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{54732054-7417-4FF4-A1B4-BE9B33408977} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{534A100B-AC38-4350-8B16-D5F795D8A30A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{8DAF3B71-B037-14A6-F844-B2F398AEF777} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E7C5EDC5-7EB9-40F7-952D-13A157BDEEFE}

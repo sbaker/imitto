@@ -5,6 +5,8 @@ namespace IMitto.Settings;
 
 public class MittoOptions
 {
+	public static readonly MittoOptions Default = new();
+
 	public MittoOptions()
 	{
 		Pipeline = new MittoPipeOptions(this);
@@ -24,4 +26,6 @@ public class MittoOptions
 	public MittoJsonOptions Json { get; set; } = new MittoJsonOptions();
 
 	public int MaxConnectionRetries { get; set; } = 5;
+
+	public int StoppingTimeoutInSeconds { get; set; } = 5;
 }

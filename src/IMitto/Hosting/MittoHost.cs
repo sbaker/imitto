@@ -1,17 +1,21 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using IMitto.Settings;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace IMitto.Hosting;
 
 public abstract class MittoHost : Disposables, IMittoHost
 {
 	private readonly ILogger _logger;
+	private readonly MittoOptions _options;
 
 	private CancellationTokenSource? _tokenSource;
 	private Task? _startedTask = null;
 
-	protected MittoHost(ILogger logger)
+	protected MittoHost(ILogger logger, IOptions<MittoOptions> options)
 	{
 		_logger = logger;
+		_options = options.Value;
 	}
 
 	protected Task StartedTask => _startedTask ?? Task.CompletedTask;
@@ -20,6 +24,8 @@ public abstract class MittoHost : Disposables, IMittoHost
 
 	protected CancellationTokenSource TokenSource => GetOrCreateTokenSource();
 
+	public bool IsRunning => !StartedTask.IsCompleted;
+
 	public Task StartAsync(CancellationToken? token = null)
 	{
 		_tokenSource ??= GetOrCreateTokenSource(token);
@@ -27,12 +33,6 @@ public abstract class MittoHost : Disposables, IMittoHost
 		_startedTask = RunAsync(_tokenSource.Token);
 
 		return Task.CompletedTask;
-
-		//TokenSource ??= CreateLinkedSource(token);
-
-		//StartedTasks.Enqueue(RunAsync(TokenSource.Token));
-
-		//return Task.CompletedTask;
 	}
 
 	public virtual async Task RunAsync(CancellationToken? token = null)
@@ -44,7 +44,7 @@ public abstract class MittoHost : Disposables, IMittoHost
 
 	public virtual Task StopAsync(CancellationToken? token = null)
 	{
-		_tokenSource!.CancelAfter(TimeSpan.FromSeconds(5));
+		_tokenSource!.CancelAfter(TimeSpan.FromSeconds(_options.StoppingTimeoutInSeconds));
 
 		return Task.WhenAll(
 			BackgroundTasks.ToArray().Select(t => StopBackgroundTask(t, _tokenSource.Token))
@@ -96,9 +96,17 @@ public abstract class MittoHost : Disposables, IMittoHost
 	}
 }
 
+public abstract class MittoHost<TOptions> : MittoHost where TOptions : MittoOptions
+{
+	protected MittoHost(ILogger logger, IOptions<TOptions> options) : base(logger, options)
+		=> Options = options.Value;
+
+	protected TOptions Options { get; }
+}
+
 public class DelegatingMittoHost<T> : MittoHost
 {
-	public DelegatingMittoHost(ILogger<DelegatingMittoHost<T>> logger, Func<T, CancellationToken, Task> action) : base(logger)
+	public DelegatingMittoHost(ILogger<DelegatingMittoHost<T>> logger, Func<T, CancellationToken, Task> action) : base(logger, MittoOptions.Default.AsOptions())
 	{
 
 	}
