@@ -3,11 +3,10 @@ using System.IO.Pipelines;
 
 namespace IMitto.Pipelines;
 
-public class SerializingPipeWriter<T> : PipeWriter
+public class SerializingPipeWriter : PipeWriter
 {
 	private readonly PipeWriter _innerWriter;
 	private readonly MittoPipeOptions _options;
-	private readonly Func<T, string> _serializer;
 
 	public SerializingPipeWriter(Stream stream, MittoPipeOptions options)
 		: this(Create(stream, options.CreateWriterOptions()), options)
@@ -18,7 +17,6 @@ public class SerializingPipeWriter<T> : PipeWriter
 	{
 		_innerWriter = innerWriter;
 		_options = options;
-		_serializer = options.CreateDefaultWriterSerializer<T>();
 	}
 
 	public override void Advance(int bytes)
@@ -51,9 +49,10 @@ public class SerializingPipeWriter<T> : PipeWriter
 		return _innerWriter.GetSpan(sizeHint);
 	}
 
-	public async Task WriteAsync(T data, CancellationToken token = default)
+	public async Task WriteAsync<T>(T data, CancellationToken token = default)
 	{
-		var serializedData = _serializer(data);
+		var serializer = _options.CreateDefaultWriterSerializer<T>();
+		var serializedData = serializer(data);
 		var bytes = _options.Encoding.GetBytes(serializedData + (char)_options.CharTerminator);
 		var memory = GetMemory(bytes.Length);
 

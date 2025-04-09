@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using IMitto.Hosting;
+using IMitto.Middlware;
 
 namespace IMitto.Net.Server;
 
@@ -41,6 +42,17 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 
 		_eventManagerTask = _eventManager.RunAsync(token);
 
+		var middleware = new MiddlewareBuilder<ConnectionContext>()
+			.Add(async (next, context, ct) =>
+			{
+				_logger.LogTrace("Middleware: start {connectionId}", context.ConnectionId);
+				await _requestHandler.HandleRequestAsync(context.State, ct).ConfigureAwait(false);
+				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
+
+				await next(context, ct).ConfigureAwait(false);
+			})
+			.Build();
+
 		return Task.Run(async () =>
 		{
 			var retryCount = 0;
@@ -66,15 +78,16 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 
 						_logger.LogTrace("Accepting Connections: end;");
 
-						var context = new ConnectionContext(
+						var connectionState = new ConnectionContext(
 							_eventManager,
 							socket,
 							TokenSource.Token);
 
-						_logger.LogTrace("Initializing client/server workflow: start {connectionId}", context.ConnectionId);
-						
-						context.BackgroundTask = Task.Run(async () => {//.Factory.StartNew(async () => {
-							await _requestHandler.HandleRequestAsync(context, token).ConfigureAwait(false);
+						_logger.LogTrace("Initializing client/server workflow: start {connectionId}", connectionState.ConnectionId);
+
+						connectionState.BackgroundTask = Task.Run(async () => {
+							var context = new MiddlewareContext<ConnectionContext>(connectionState);
+							await middleware.HandleAsync(context, token).ConfigureAwait(false);
 						}, TokenSource.Token);
 					}
 				}

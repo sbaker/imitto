@@ -2,6 +2,7 @@
 using System.Text.Json;
 using IMitto.Converters;
 using IMitto.Net.Models;
+using System.Text.Json.Serialization.Metadata;
 
 namespace IMitto.Settings;
 
@@ -11,9 +12,10 @@ public class MittoJsonOptions
 	{
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 		RespectNullableAnnotations = true,
+		//TypeInfoResolver = new MittoTypeInfoResolver(),
 		UnknownTypeHandling = JsonUnknownTypeHandling.JsonElement,
-		UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-		DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+		UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
+		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,//JsonIgnoreCondition.Never,
 		PreferredObjectCreationHandling = JsonObjectCreationHandling.Replace,
 		Converters = {
 			new JsonStringEnumConverter(),
@@ -23,13 +25,14 @@ public class MittoJsonOptions
 		}
 	};
 
-	//private sealed class MittoTypeInfoResolver : IJsonTypeInfoResolver
-	//{
-	//	public JsonTypeInfo? GetTypeInfo(Type type, JsonSerializerOptions options)
-	//	{
-	//		var typeInfo = JsonTypeInfo.CreateJsonTypeInfo(type, options);
+	private sealed class MittoTypeInfoResolver : IJsonTypeInfoResolver
+	{
+		public JsonTypeInfo GetTypeInfo(Type type, JsonSerializerOptions options)
+		{
+			var typeInfo = JsonTypeInfo.CreateJsonTypeInfo(type, options);
 
-	//		return typeInfo;
-	//	}
-	//}
+
+			return typeInfo;
+		}
+	}
 }

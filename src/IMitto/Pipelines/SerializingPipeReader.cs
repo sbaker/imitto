@@ -1,14 +1,14 @@
 ﻿using IMitto.Settings;
+using Microsoft.Extensions.Options;
 using System.Buffers;
 using System.IO.Pipelines;
 
 namespace IMitto.Pipelines;
 
-public class SerializingPipeReader<T> : PipeReader
+public class SerializingPipeReader : PipeReader
 {
 	private readonly PipeReader _innerReader;
 	private readonly MittoPipeOptions _options;
-	private readonly Func<string, T> _serializer;
 
 	public SerializingPipeReader(Stream stream, MittoPipeOptions options)
 		: this(Create(stream, options.CreateReaderOptions()), options)
@@ -19,7 +19,6 @@ public class SerializingPipeReader<T> : PipeReader
 	public SerializingPipeReader(PipeReader innerReader, MittoPipeOptions options)
 	{
 		_innerReader = innerReader;
-		_serializer = options.CreateDefaultReaderSerializer<T>();
 		_options = options;
 	}
 
@@ -48,11 +47,10 @@ public class SerializingPipeReader<T> : PipeReader
 		return _innerReader.ReadAsync(token);
 	}
 
-	public async ValueTask<T> ReadValueAsync(CancellationToken token = default)
+	public async ValueTask<T> ReadValueAsync<T>(CancellationToken token = default)
 	{
 		T value = default!;
 
-		
 		while (true)
 		{
 			ReadResult result = await _innerReader.ReadAsync(token);
@@ -76,16 +74,13 @@ public class SerializingPipeReader<T> : PipeReader
 				}
 				while (position != null);
 
-				// Tell the PipeReader how much of the buffer we have consumed
 				_innerReader.AdvanceTo(buffer.Start, buffer.End);
 
-				// Stop reading if there's no more data coming
 				if (result.IsCompleted)
 				{
 					if (buffer.Length > 0)
 					{
-						// The message is incomplete and there's no more data to process.
-						throw new InvalidDataException("Reader completed with incomplete message.");
+						throw new InvalidDataException("Reader completed with an unread buffer.");
 					}
 
 					break;
@@ -101,16 +96,18 @@ public class SerializingPipeReader<T> : PipeReader
 
 		T Serialize(ReadOnlySequence<byte> buffer)
 		{
+			var serializer = _options.CreateDefaultReaderSerializer<T>();
+
 			if (buffer.IsSingleSegment)
 			{
 				// Convert the buffer to a string
-				string value = _options.Encoding.GetString(buffer.FirstSpan);
+				var value = _options.Encoding.GetString(buffer.FirstSpan);
+
 				// Deserialize the string to the object
-				return _serializer(value);
+				return serializer(value);
 			}
 
 			// Convert the buffer to a string
-
 			var result = string.Create((int)buffer.Length, buffer, (span, sequence) =>
 			{
 				foreach (var segment in sequence)
@@ -122,7 +119,7 @@ public class SerializingPipeReader<T> : PipeReader
 			});
 				
 			// Deserialize the string to the object
-			return _serializer(result); ;
+			return serializer(result);
 		}
 	}
 

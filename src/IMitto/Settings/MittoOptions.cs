@@ -28,4 +28,6 @@ public class MittoOptions
 	public int MaxConnectionRetries { get; set; } = 5;
 
 	public int StoppingTimeoutInSeconds { get; set; } = 5;
+	
+	public bool EnableSocketPipelines { get; set; } = false;
 }

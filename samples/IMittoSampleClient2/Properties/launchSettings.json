@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "MittoSampleClient1": {
+    "MittoSampleClient2": {
       "commandName": "Project"
     },
     "Container (Dockerfile)": {

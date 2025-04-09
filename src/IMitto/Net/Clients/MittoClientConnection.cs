@@ -2,6 +2,7 @@
 using IMitto.Net.Models;
 using IMitto.Net.Requests;
 using IMitto.Net.Responses;
+using IMitto.Pipelines;
 
 namespace IMitto.Net.Clients;
 
@@ -18,31 +19,6 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 
 	protected MittoSocket? Socket => _mittoSocket;
 
-	public async Task<MittoStatus> AuthenticateAsync(CancellationToken token = default)
-	{
-		if (!IsConnected())
-		{
-			await ConnectAsync(token);
-		}
-
-		var authBody = new MittoAuthenticationMessageBody
-		{
-			Key = Options.AuthenticationKey,
-			Secret = Options.AuthenticationSecret
-		};
-
-		var authHeader = new MittoHeader
-		{
-			Path = MittoPaths.Auth,
-			Action = MittoEventType.Authentication
-		};
-
-		await _mittoSocket!.SendRequestAsync(new AuthenticationRequest(authBody, authHeader), token);
-
-		var response = await _mittoSocket.ReadResponseAsync<MittoStatusResponse>(token);
-		return response!.Body.Status;
-	}
-
 	public async Task ConnectAsync(CancellationToken token = default)
 	{
 		if (_mittoSocket?.IsConnected ?? false == true)
@@ -57,7 +33,7 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;
 		tcpClient.SendTimeout = connectionOptions.ConnectionTimeout;
 
-		_mittoSocket = new MittoSocket(tcpClient, Options);
+		_mittoSocket = new MittoPipelineSocket(tcpClient, Options);
 	}
 
 	public override bool IsConnected()
@@ -65,11 +41,31 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 		return _mittoSocket?.IsConnected ?? false;
 	}
 
+	public Task<T?> ReadResponseAsync<T>(CancellationToken token)
+	{
+		if (_mittoSocket == null || !_mittoSocket.IsConnected)
+		{
+			throw new InvalidOperationException("Socket is not connected or not initialized.");
+		}
+
+		return _mittoSocket.ReadResponseAsync<T>(token);
+	}
+
+	public Task SendRequestAsync(AuthenticationRequest authenticationRequest, CancellationToken token)
+	{
+		if (_mittoSocket == null || !_mittoSocket.IsConnected)
+		{
+			throw new InvalidOperationException("Socket is not connected or not initialized.");
+		}
+
+		return _mittoSocket.SendRequestAsync(authenticationRequest, token);
+	}
+
 	public async Task<EventNotificationsModel> WaitForEventsAsync(CancellationToken token)
 	{
-		if (!IsConnected())
+		if (_mittoSocket == null || !_mittoSocket.IsConnected)
 		{
-			await ConnectAsync(token);
+			throw new InvalidOperationException("Socket is not connected or not initialized.");
 		}
 
 		await _mittoSocket!.SendRequestAsync(new MittoTopicsRequest

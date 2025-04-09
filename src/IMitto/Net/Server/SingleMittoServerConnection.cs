@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using IMitto.Pipelines;
+using System.Net.Sockets;
 
 namespace IMitto.Net.Server;
 
@@ -18,7 +19,7 @@ public class SingleMittoServerConnection : MittoServerConnection
 
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;
 		tcpClient.SendTimeout = connectionOptions.ConnectionTimeout;
-		return new MittoSocket(tcpClient, Options);
+		return new MittoPipelineSocket(tcpClient, Options);
 	}
 
 	public override Task ConnectAsync(CancellationToken token = default)

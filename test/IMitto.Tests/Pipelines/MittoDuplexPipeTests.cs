@@ -19,8 +19,8 @@ public class MittoDuplexPipeTests
 		var pipe = new MittoDuplexPipe(stream, options);
 
 		// Assert
-		Assert.NotNull(pipe.Input);
-		Assert.NotNull(pipe.Output);
+		Assert.NotNull(pipe.Reader);
+		Assert.NotNull(pipe.Writer);
 	}
 
 	[Fact]
@@ -32,7 +32,7 @@ public class MittoDuplexPipeTests
 		var options = new MittoPipeOptions(json, Encoding.UTF8);
 
 		var stream = new MemoryStream(new byte[158]);
-		var pipe = new MittoDuplexPipe<MittoStringMessageBody>(stream, options);
+		var pipe = new MittoDuplexPipe(stream, options);
 		var cancellationToken = new CancellationToken();
 		
 		var message = new MittoStringMessageBody()
@@ -43,7 +43,7 @@ public class MittoDuplexPipeTests
 		await pipe.Writer.WriteAsync(message, cancellationToken);
 		stream.Position = 0;
 
-		var result = await pipe.Reader.ReadValueAsync(cancellationToken);
+		var result = await pipe.Reader.ReadValueAsync<MittoStringMessageBody>(cancellationToken);
 		
 		message = result;
 
