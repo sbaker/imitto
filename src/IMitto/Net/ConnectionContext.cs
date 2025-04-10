@@ -1,19 +1,16 @@
-﻿using IMitto.Net.Server;
+﻿using IMitto.Net.Models;
+using IMitto.Net.Server;
 
 namespace IMitto.Net;
 
 public class ConnectionContext : Disposable
 {
-	private readonly CancellationTokenRegistration _registration;
-
 	private Task? _backgroudTask;
 
 	public ConnectionContext(IMittoEvents eventAggregator, MittoSocket socket, CancellationToken token)
 	{
 		EventAggregator = eventAggregator;
 		Socket = socket;
-
-		//_registration = token.Register(Dispose);
 
 		eventAggregator.Publish(ServerEventConstants.ConnectionReceivedEvent, this);
 	}
@@ -36,6 +33,8 @@ public class ConnectionContext : Disposable
 		}
 	}
 
+	public TopicRegistrationModel? Topics { get; set; }
+
 	protected override void DisposeCore()
 	{
 		Socket.Dispose();
@@ -44,7 +43,5 @@ public class ConnectionContext : Disposable
 		{
 			BackgroundTask?.Wait();
 		}
-
-		_registration.Dispose();
 	}
 }

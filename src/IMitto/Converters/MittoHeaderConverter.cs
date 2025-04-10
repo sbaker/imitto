@@ -42,6 +42,12 @@ internal class MittoHeaderConverter : JsonConverter<MittoHeader>
 			writer.WriteStringValue(value.Result?.ToString());
 		}
 
+		if (value.ConnectionId is not null)
+		{
+			writer.WritePropertyName(nameof(value.ConnectionId));
+			writer.WriteStringValue(value.ConnectionId?.ToString());
+		}
+
 		foreach (var item in value)
 		{
 			if (item.Value is not null)

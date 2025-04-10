@@ -67,7 +67,18 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 
 			if (validationResult.IsAuthorized)
 			{
+				// TODO: Also, side note: the client that sent the package should not receive the
+				// TODO: same package and publish the event locally after sending it to the server
+				// TODO: but might need to verify before publishing. Then again the server should
+				// TODO: respond the client with its permission (or if it applies) to publish that event locally 
+
+				//await SendResponse(context, new MittoStatusResponse(MittoStatusBody.WithStatus((int)HttpStatusCode.OK), message.Header), token);
+
+				context.Topics = message.Body.Topics;
+
+				_logger.LogTrace("Topic Registration: start {connectionId}", context.ConnectionId);
 				await RegisterClientInServerManager(context, message, token);
+				_logger.LogTrace("Topic Registration: end {connectionId}", context.ConnectionId);
 			}
 		}
 	}
@@ -112,7 +123,7 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 				: (int)HttpStatusCode.Unauthorized);
 			header = MittoHeader.Authorization(authenticated
 				? MittoEventType.Completed
-				: MittoEventType.Unauthorized);
+				: MittoEventType.Unauthorized, context.ConnectionId);
 
 			_logger.LogTrace("Authenticating request: end {connectionId}", context.ConnectionId);
 		}

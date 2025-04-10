@@ -13,32 +13,47 @@ builder.Logging.AddJsonConsole(options => {
 	options.IncludeScopes = true;
 });
 
-var topic = "testing-topic";
+var produceTopic = "testing-topic-1";
+var consumeTopic = "testing-topic-2";
 var mittoKey = "MittoAuthenticationKey";
 var mittoSecretKey = "MittoAuthenticationSecret";
 
 builder.Services.AddIMitto(configure =>
-	configure.AddConsumer<TestPackageConsumer, TestPackage>(topic)
+	configure.AddConsumer<TestPackageConsumer, TestPackage>(consumeTopic)
 		.Configure(options => {
 			options.AuthenticationKey = builder.Configuration.GetValue<string>(mittoKey);
 			options.AuthenticationSecret = builder.Configuration.GetValue<string>(mittoSecretKey);
 		})
-		.AddProducer<TestPackage>(topic));
+		.AddProducer<TestPackage>(produceTopic));
 
 var host = builder.Build();
 
 var producer = host.Services.GetRequiredService<IMittoProducerProvider<TestPackage>>();
 
-await host.StartAsync();
+var timer = new Timer(PublishMessage, null, 5000, 12500);
 
-await Task.Delay(10000).ContinueWith(async _ => {
+void PublishMessage(object? state)
+{
 	var testPackage = new TestPackage
 	{
 		Goods = "Test Package",
 	};
-	var producerInstance = producer.GetProducerForTopic(topic);
-	var result = await producerInstance.ProduceAsync(testPackage);
-	Console.WriteLine($"Produced: {result}");
-});
+	var producerInstance = producer.GetProducerForTopic(produceTopic);
+	producerInstance.ProduceAsync(testPackage).ContinueWith(task => {
+		Console.WriteLine($"Produced: {task.Result}");
+	});
+}
+
+await host.StartAsync();
+
+//await Task.Delay(10000).ContinueWith(async _ => {
+//	var testPackage = new TestPackage
+//	{
+//		Goods = "Test Package",
+//	};
+//	var producerInstance = producer.GetProducerForTopic(topic);
+//	var result = await producerInstance.ProduceAsync(testPackage);
+//	Console.WriteLine($"Produced: {result}");
+//});
 
 await host.WaitForShutdownAsync();

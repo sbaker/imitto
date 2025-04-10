@@ -14,6 +14,7 @@ public class MittoHeader : Dictionary<string, object?>
 
 	public MittoHeader(IDictionary<string, object?> headers)
 	{
+		if (headers.TryGetValue(nameof(ConnectionId), out var connectionId)) ConnectionId = connectionId?.ToString();
 		if (headers.TryGetValue(nameof(Path), out object? value)) Path = value?.ToString();
 		if (headers.ContainsKey(nameof(Action))) Action = ParseEventType(headers[nameof(Action)]);
 		if (headers.ContainsKey(nameof(Result))) Result = ParseEventType(headers[nameof(Result)]);
@@ -29,15 +30,15 @@ public class MittoHeader : Dictionary<string, object?>
 		}
 	}
 
-	public static MittoHeader Authorization(MittoEventType? result = null, string? correlationId = null) => new()
+	public static MittoHeader Authorization(MittoEventType? result = null, string? connectionId = null) => new()
 	{
 		Path = MittoPaths.Auth,
 		Action = MittoEventType.Authentication,
 		Result = result,
-		CorrelationId = correlationId
+		ConnectionId = connectionId,
 	};
 
-	public string? CorrelationId { get; set; }
+	public string? ConnectionId { get; set; }
 
 	public string? Path { get; set; }
 

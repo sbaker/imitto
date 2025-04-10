@@ -9,6 +9,17 @@ public class MittoStatusBody : MittoMessageBody
 	public static MittoStatusBody Error(string? message = null)
 		=> WithStatus(code: (int)MittoEventType.Error, message: message);
 
+	public static MittoStatusBody WithStatus(MittoEventType? code = null, string? message = null) => new()
+	{
+		Status = new()
+		{
+			Code = (int)(code ??= MittoEventType.Error),
+			Message = message ?? (MittoStatus.IsSuccessfulCode((int)code.Value)
+				? nameof(MittoEventType.Completed)
+				: nameof(MittoEventType.Error))
+		}
+	};
+
 	public static MittoStatusBody WithStatus(int? code = null, string? message = null) => new()
 	{
 		Status = new()

@@ -64,6 +64,9 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 			throw new InvalidOperationException("Socket is not connected or not initialized.");
 		}
 
+		var consumerTopics = _options.TypeMappings.Where(x => x.Value.IsConsumer).Select(x => x.Key).ToArray();
+		var producerTopics = _options.TypeMappings.Where(x => x.Value.IsProducer).Select(x => x.Key).ToArray();
+
 		await connection!.SendRequestAsync(new MittoTopicsRequest
 		{
 			Header = new()
@@ -73,11 +76,10 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 			},
 			Body = new()
 			{
-				//var topics =Options.TypeMappings.Keys.Distinct()
 				Topics = new TopicRegistrationModel
 				{
-					PublishTopics = ["test-topic-1"],
-					SubscriptionTopics = ["test-topic-2"],
+					ProduceTopics = producerTopics,
+					ConsumeTopics = consumerTopics,
 				}
 			}
 		}, token);
@@ -92,7 +94,7 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 
 		if (response is not null && response.Header.Path == MittoPaths.Topics)
 		{
-			var eventNotifications = response.Body;//.ReadBodyAs<EventNotificationsBody>(Options.Json.Serializer);
+			var eventNotifications = response.Body;
 
 			return eventNotifications.Content!;
 		}

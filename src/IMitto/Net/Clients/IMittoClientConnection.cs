@@ -5,6 +5,8 @@ namespace IMitto.Net.Clients;
 
 public interface IMittoClientConnection : IMittoConnection
 {
+	string? ConnectionId { get; set; }
+
 	bool IsDataAvailable();
 
 	Task ConnectAsync(CancellationToken token = default);

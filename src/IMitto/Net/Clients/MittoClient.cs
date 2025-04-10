@@ -119,7 +119,9 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 
 		await Connection!.SendRequestAsync(new AuthenticationRequest(authBody, authHeader), token);
 		var response = await Connection.ReadResponseAsync<MittoStatusResponse>(token);
-		return response!.Body.Status;
+
+		Connection.ConnectionId = response!.Header.ConnectionId;
+		return response.Body.Status;
 	}
 
 	private Task StartEventLoopsAsync(CancellationToken token)

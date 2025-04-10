@@ -14,6 +14,8 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 		Options = options;
 	}
 
+	public string? ConnectionId { get; set; }
+
 	protected MittoClientOptions Options { get; }
 
 	protected MittoSocket? Socket => _mittoSocket;
