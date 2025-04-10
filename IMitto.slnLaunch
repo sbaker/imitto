@@ -1,0 +1,22 @@
+[
+  {
+    "Name": "start clients / server",
+    "Projects": [
+      {
+        "Path": "samples\\IMittoSampleServer\\IMittoSampleServer.csproj",
+        "Action": "Start",
+        "DebugTarget": "MittoSampleServer"
+      },
+      {
+        "Path": "samples\\IMittoSampleClient1\\IMittoSampleClient1.csproj",
+        "Action": "Start",
+        "DebugTarget": "MittoSampleClient1"
+      },
+      {
+        "Path": "samples\\IMittoSampleClient2\\IMittoSampleClient2.csproj",
+        "Action": "Start",
+        "DebugTarget": "MittoSampleClient1"
+      }
+    ]
+  }
+]
