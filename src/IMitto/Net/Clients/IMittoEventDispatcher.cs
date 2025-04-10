@@ -4,5 +4,5 @@ namespace IMitto.Net.Clients;
 
 public interface IMittoEventDispatcher
 {
-	ValueTask DispatchAsync(EventNotificationsModel notifications);
+	ValueTask DispatchAsync(EventNotificationsModel package);
 }

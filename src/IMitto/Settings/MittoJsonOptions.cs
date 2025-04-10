@@ -21,6 +21,7 @@ public class MittoJsonOptions
 			new JsonStringEnumConverter(),
 			new MittoBodyConverter<MittoMessageBody>(),
 			new MittoHeaderConverter(),
+			new MittoEventConverter(),
 			new MittoAuthenticationRequestConverter()
 		}
 	};

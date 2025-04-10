@@ -1,12 +1,12 @@
 ﻿namespace IMitto.Middlware;
 
-public sealed class MiddlewareCollection : List<MiddlewareBuilderAction>
+public sealed class MiddlewareCollection : List<MiddlewareBuilderFunc>, IMiddlewareHandler
 {
 	public MiddlewareCollection() : base()
 	{
 	}
 
-	public MiddlewareCollection(IEnumerable<MiddlewareBuilderAction> collection) : base(collection)
+	public MiddlewareCollection(IEnumerable<MiddlewareBuilderFunc> collection) : base(collection)
 	{
 	}
 
@@ -14,38 +14,19 @@ public sealed class MiddlewareCollection : List<MiddlewareBuilderAction>
 	{
 	}
 
-	public Task WhenAllAsync(MiddlewareContext context, CancellationToken token)
+	public Task HandleAsync(MiddlewareContext context, CancellationToken token)
 	{
-		var handlers = ToArray();
-
-		if (handlers.Length == 0)
-		{
-			return Task.CompletedTask;
-		}
-
-		var count = 0;
-
-		return Next(context, token);
-
-		Task Next(MiddlewareContext context, CancellationToken token)
-		{
-			if (count >= handlers.Length)
-			{
-				return Task.CompletedTask;
-			}
-
-			return handlers[count++].Invoke(Next, context, token);
-		}
+		return MiddlewareExecutor.ExecuteAsync(this, context, token).Await();
 	}
 }
 
-public sealed class MiddlewareCollection<T> : List<MiddlewareBuilderAction<T>>
+public sealed class MiddlewareCollection<T> : List<MiddlewareBuilderFunc<T>>, IMiddlewareHandler<T>
 {
 	public MiddlewareCollection() : base()
 	{
 	}
 
-	public MiddlewareCollection(IEnumerable<MiddlewareBuilderAction<T>> collection) : base(collection)
+	public MiddlewareCollection(IEnumerable<MiddlewareBuilderFunc<T>> collection) : base(collection)
 	{
 	}
 
@@ -53,28 +34,8 @@ public sealed class MiddlewareCollection<T> : List<MiddlewareBuilderAction<T>>
 	{
 	}
 
-	public Task WhenAllAsync(MiddlewareContext<T> context, CancellationToken token)
+	public Task HandleAsync(MiddlewareContext<T> context, CancellationToken token)
 	{
-		var handlers = ToArray();
-
-		if (handlers.Length == 0)
-		{
-			return Task.CompletedTask;
-		}
-
-		var count = 0;
-
-		return Next(context, token);
-
-		Task Next(MiddlewareContext<T> context, CancellationToken token)
-		{
-			if (count >= handlers.Length)
-			{
-				return Task.CompletedTask;
-			}
-
-			token.ThrowIfCancellationRequested();
-			return handlers[count++].Invoke(Next, context, token);
-		}
+		return MiddlewareExecutor.ExecuteAsync(this, context, token).Await();
 	}
 }

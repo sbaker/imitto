@@ -2,10 +2,19 @@
 
 public class MittoEvent
 {
-	public string RawMessage { get; set; }
+	public object? Package { get; set; }
+
+	public string? Topic { get; set; }
 }
 
 public class MittoEvent<TMessage> : MittoEvent
 {
-	public TMessage? Message { get; set; }
+	public MittoEvent()
+	{
+	}
+
+	public MittoEvent(PackagedGoods<TMessage>? message)
+	{
+		Package = message;
+	}
 }

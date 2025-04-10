@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using IMittoSampleClient2;
+using IMitto.Producers;
 
 var builder = Host.CreateApplicationBuilder();
 
@@ -26,4 +27,18 @@ builder.Services.AddIMitto(configure =>
 
 var host = builder.Build();
 
-host.Run();
+var producer = host.Services.GetRequiredService<IMittoProducerProvider<TestPackage>>();
+
+await host.StartAsync();
+
+await Task.Delay(10000).ContinueWith(async _ => {
+	var testPackage = new TestPackage
+	{
+		Goods = "Test Package",
+	};
+	var producerInstance = producer.GetProducerForTopic(topic);
+	var result = await producerInstance.ProduceAsync(testPackage);
+	Console.WriteLine($"Produced: {result}");
+});
+
+await host.WaitForShutdownAsync();

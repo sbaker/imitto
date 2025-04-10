@@ -5,5 +5,7 @@ namespace IMitto.Net.Clients;
 
 public interface IMittoClientEventManager : IMittoLocalEvents
 {
-	Task HandleClientEventReceived(EventNotificationsModel clientEvent, CancellationToken token);
+	Task WaitForClientEventsAsync(IMittoClientConnection connection, CancellationToken token);
+
+	Task<EventNotificationsModel> WaitForServerEventsAsync(IMittoClientConnection connection, CancellationToken token);
 }

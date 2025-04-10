@@ -17,15 +17,15 @@ public static partial class ServiceCollectionExtensions
 			.AddIMittoChannels<ConnectionContext>(options => {
 				options.ChannelFullMode = BoundedChannelFullMode.Wait;
 			})
-			.AddIMittoChannels<ClientNotificationModel>(options => {
+			.AddIMittoChannels<EventNotificationsModel>(options => {
 				options.ChannelFullMode = BoundedChannelFullMode.Wait;
 			})
-			.AddHostedService<MittoServerHostedBackgroundService>()
 			.AddSingleton<IServerEventManager, ServerEventManager>()
 			.AddSingleton<IMittoRequestHandler, MittoServerRequestHandler>()
 			.AddSingleton<IMittoEventListener, MittoEventListener>()
 			.AddSingleton<IMittoAuthenticationHandler, NullAuthenticationHandler>()
-			.AddSingleton<IMittoServer, MittoServer>();
+			.AddSingleton<IMittoServer, MittoServer>()
+			.AddHostedService<MittoServerHostedBackgroundService>();
 	}
 
 	public static IServiceCollection AddIMittoServer<TRepository>(this IServiceCollection services, Action<MittoServerOptions>? configure = null)

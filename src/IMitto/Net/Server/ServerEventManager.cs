@@ -40,6 +40,8 @@ public sealed class ServerEventManager : MittoLocalEvents, IServerEventManager
 
 					while (await channelReader.WaitToReadAsync(token))
 					{
+						token.ThrowIfCancellationRequested();
+
 						var connection = await channelReader.ReadAsync(token);
 						var eventLoopTask = _eventListener.PollForEventsAsync(connection, token);
 						_connections.Add(new ClientConnectionContext(connection, eventLoopTask, token));

@@ -1,6 +1,7 @@
 ﻿using IMitto.Extensions.DependencyInjection;
 using IMitto.Net.Clients;
 using IMitto.Net.Models;
+using IMitto.Producers;
 using IMitto.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
@@ -21,6 +22,7 @@ public static partial class ServiceCollectionExtensions
 
 		return builder.Build()
 			.AddIMittoChannels<EventNotificationsModel>(_ => { })
+			.AddSingleton(typeof(IMittoProducerProvider<>), typeof(MittoProducerProvider<>))
 			.AddSingleton<IMittoClientEventManager, MittoClientEventManager>()
 			.AddSingleton<IMittoEventDispatcher, ChannelMittoEventDispatcher>();
 	}

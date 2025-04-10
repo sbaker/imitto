@@ -33,8 +33,7 @@ public class MittoServerRequestHandlerTests
 			_mockLogger,
 			_mockAuthenticationHandler.Target,
 			_mockEventManager.Target,
-			_mockChannelProvider.Target,
-			_mockEventListener.Target);
+			_mockChannelProvider.Target);
 	}
 
 	//[Fact]

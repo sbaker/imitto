@@ -11,9 +11,12 @@ public class MittoEventListener : IMittoEventListener
 {
 	private readonly ILogger<MittoEventListener> _logger;
 	private readonly MittoConnectionOptions _options;
-	private readonly IMittoChannelWriterProvider<ClientNotificationModel> _channelWriter;
+	private readonly IMittoChannelWriterProvider<EventNotificationsModel> _channelWriter;
 
-	public MittoEventListener(ILogger<MittoEventListener> logger, IOptions<MittoConnectionOptions> options, IMittoChannelWriterProvider<ClientNotificationModel> channelWriter)
+	public MittoEventListener(
+		ILogger<MittoEventListener> logger,
+		IOptions<MittoConnectionOptions> options,
+		IMittoChannelWriterProvider<EventNotificationsModel> channelWriter)
 	{
 		_logger = logger;
 		_options = options.Value;
@@ -30,7 +33,7 @@ public class MittoEventListener : IMittoEventListener
 
 			if (!context.Socket.DataAvailable) { continue; }
 
-			var message = await context.Socket.ReadAsync<ClientNotificationRequest>(token);
+			var message = await context.Socket.ReadAsync<EventNotificationRequest>(token);
 
 			if (message == null) { continue; }
 
@@ -40,7 +43,14 @@ public class MittoEventListener : IMittoEventListener
 
 			if (await writer.WaitToWriteAsync(token))
 			{
-				await writer.WriteAsync(message.Body.Notification, token);
+				// TODO: Add code to publish an event received from client to other clients listening on that topic.
+				// TODO: Also, side note: the client that sent the package should not receive the
+				// TODO: same package and publish the event locally after sending it to the server
+				// TODO: but might need to verify before publishing. Then again the server should
+				// TODO: respond the client with its permission (or if it applies) to publish that event locally 
+
+				// TODO: Nothing is listening to this channel yet. Need to publish to the connected clients.
+				await writer.WriteAsync(message.Body.Content!, token);
 			}
 		}
 

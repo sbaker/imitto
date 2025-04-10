@@ -2,7 +2,7 @@
 
 public interface IMiddlewareBuilder
 {
-	IMiddlewareBuilder Add(MiddlewareBuilderAction action);
+	IMiddlewareBuilder Add(MiddlewareBuilderFunc action);
 
 	IMiddlewareBuilder Add(IMiddlewareHandler handler);
 
@@ -11,7 +11,7 @@ public interface IMiddlewareBuilder
 
 public interface IMiddlewareBuilder<T>
 {
-	IMiddlewareBuilder<T> Add(MiddlewareBuilderAction<T> action);
+	IMiddlewareBuilder<T> Add(MiddlewareBuilderFunc<T> action);
 
 	IMiddlewareBuilder<T> Add(IMiddlewareHandler<T> handler);
 

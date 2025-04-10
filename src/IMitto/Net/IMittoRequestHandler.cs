@@ -2,5 +2,7 @@
 
 public interface IMittoRequestHandler
 {
-	Task HandleRequestAsync(ConnectionContext context, CancellationToken token = default);
+	Task HandleAuthenticationAsync(ConnectionContext context, CancellationToken token);
+
+	Task HandleAuthorizationAsync(ConnectionContext context, CancellationToken token);
 }

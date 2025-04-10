@@ -4,7 +4,7 @@ public class MiddlewareBuilder : IMiddlewareBuilder
 {
 	protected readonly MiddlewareCollection middleware = [];
 
-	public IMiddlewareBuilder Add(MiddlewareBuilderAction action)
+	public IMiddlewareBuilder Add(MiddlewareBuilderFunc action)
 	{
 		middleware.Add(action);
 		return this;
@@ -32,7 +32,7 @@ public class MiddlewareBuilder : IMiddlewareBuilder
 		
 		public Task HandleAsync(MiddlewareContext context, CancellationToken token)
 		{
-			return _middleware.WhenAllAsync(context, token);
+			return _middleware.HandleAsync(context, token);
 		}
 	}
 }
@@ -41,7 +41,7 @@ public class MiddlewareBuilder<T> : IMiddlewareBuilder<T>
 {
 	protected readonly MiddlewareCollection<T> middleware = [];
 
-	public IMiddlewareBuilder<T> Add(MiddlewareBuilderAction<T> action)
+	public IMiddlewareBuilder<T> Add(MiddlewareBuilderFunc<T> action)
 	{
 		middleware.Add(action);
 		return this;
@@ -49,7 +49,8 @@ public class MiddlewareBuilder<T> : IMiddlewareBuilder<T>
 
 	public IMiddlewareBuilder<T> Add(IMiddlewareHandler<T> handler)
 	{
-		middleware.Add((next, context, token) => handler.HandleAsync(context, token));
+		var middlewareWrapper = new MiddlewareChainHandler<T>(handler);
+		middleware.Add(middlewareWrapper.HandleAsync);
 		return this;
 	}
 
@@ -58,34 +59,20 @@ public class MiddlewareBuilder<T> : IMiddlewareBuilder<T>
 		return new RootMiddlewareHandler<T>(middleware);
 	}
 
-	private class RootMiddlewareHandler<TState> : IMiddlewareHandler<TState>
+	private class RootMiddlewareHandler<TState>(MiddlewareCollection<TState> middleware) : IMiddlewareHandler<TState>
 	{
-		private readonly MiddlewareCollection<TState> _middleware;
-
-		public RootMiddlewareHandler(MiddlewareCollection<TState> middleware)
-		{
-			_middleware = middleware;
-		}
-
 		public Task HandleAsync(MiddlewareContext<TState> context, CancellationToken token)
 		{
-			return _middleware.WhenAllAsync(context, token);
+			return middleware.HandleAsync(context, token);
 		}
 	}
 
-	private class MiddlewareHandler<TState> : IMiddlewareHandler<TState>
+	public sealed class MiddlewareChainHandler<TState>(IMiddlewareHandler<TState> innerHandler)
 	{
-		private readonly MiddlewareBuilderAction<TState> _action;
-		private readonly IMiddlewareHandler<TState> _next;
-
-		public MiddlewareHandler(MiddlewareBuilderAction<TState> action, IMiddlewareHandler<TState> next)
+		public async Task HandleAsync(MiddlewareFunc<TState> next, MiddlewareContext<TState> context, CancellationToken token)
 		{
-			_action = action;
-			_next = next;
-		}
-		public Task HandleAsync(MiddlewareContext<TState> context, CancellationToken token)
-		{
-			return _action(_next.HandleAsync, context, token);
+			await innerHandler.HandleAsync(context, token);
+			await next.Invoke(context, token);
 		}
 	}
 }

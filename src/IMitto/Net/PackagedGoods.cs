@@ -1,6 +1,13 @@
-﻿namespace IMitto.Producers;
+﻿using IMitto.Producers;
 
-public record PackagedGoods<TGoods>(TGoods Product, string Topic) : PackagedGoods(typeof(TGoods), Product!, Topic);
+namespace IMitto.Net;
+
+public record PackagedGoods<TGoods> : PackagedGoods
+{
+	public PackagedGoods(TGoods product, string topic) : base(typeof(TGoods), product!, topic)
+	{
+	}
+}
 
 public record PackagedGoods
 {
@@ -9,7 +16,7 @@ public record PackagedGoods
 	public PackagedGoods(Type producType, object goods, string topic)
 	{
 		CreatedAt = DateTime.UtcNow;
-		ProductType = producType;
+		ProductType = producType.FullName!;
 		ProductName = producType.Name;
 		Goods = goods;
 		Topic = topic;
@@ -21,7 +28,7 @@ public record PackagedGoods
 
 	public DateTime CreatedAt { get; }
 
-	public Type ProductType { get; }
+	public string ProductType { get; }
 
 	public string ProductName { get; }
 

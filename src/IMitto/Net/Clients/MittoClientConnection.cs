@@ -1,5 +1,4 @@
 ﻿using System.Net.Sockets;
-using IMitto.Net.Models;
 using IMitto.Net.Requests;
 using IMitto.Net.Responses;
 using IMitto.Pipelines;
@@ -41,67 +40,29 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 		return _mittoSocket?.IsConnected ?? false;
 	}
 
-	public Task<T?> ReadResponseAsync<T>(CancellationToken token)
+	public bool IsDataAvailable()
 	{
-		if (_mittoSocket == null || !_mittoSocket.IsConnected)
-		{
-			throw new InvalidOperationException("Socket is not connected or not initialized.");
-		}
-
-		return _mittoSocket.ReadResponseAsync<T>(token);
+		return _mittoSocket?.DataAvailable ?? false;
 	}
 
-	public Task SendRequestAsync(AuthenticationRequest authenticationRequest, CancellationToken token)
+	public Task<TResponse?> ReadResponseAsync<TResponse>(CancellationToken token) where TResponse : IMittoResponse
 	{
 		if (_mittoSocket == null || !_mittoSocket.IsConnected)
 		{
 			throw new InvalidOperationException("Socket is not connected or not initialized.");
 		}
 
-		return _mittoSocket.SendRequestAsync(authenticationRequest, token);
+		return _mittoSocket.ReadResponseAsync<TResponse>(token);
 	}
 
-	public async Task<EventNotificationsModel> WaitForEventsAsync(CancellationToken token)
+	public Task SendRequestAsync<TRequest>(TRequest request, CancellationToken token) where TRequest : IMittoRequest
 	{
 		if (_mittoSocket == null || !_mittoSocket.IsConnected)
 		{
 			throw new InvalidOperationException("Socket is not connected or not initialized.");
 		}
 
-		await _mittoSocket!.SendRequestAsync(new MittoTopicsRequest
-		{
-			Header = new()
-			{
-				Path = MittoPaths.Topics,
-				Action = MittoEventType.Consume
-			},
-			Body = new()
-			{
-				//var topics =Options.TypeMappings.Keys.Distinct()
-				Topics = new TopicRegistrationModel
-				{
-					PublishTopics = ["test-topic-1"],
-					SubscriptionTopics = ["test-topic-2"],
-				}
-			}
-		}, token);
-		
-		while (!_mittoSocket.DataAvailable)
-		{
-			token.ThrowIfCancellationRequested();
-			await Task.Delay(Options.Connection.TaskDelayMilliseconds, token);
-		}
-
-		var response = await _mittoSocket.ReadResponseAsync<EventNotificationsResponse>(token);
-
-		if (response is not null && response.Header.Path == MittoPaths.Topics)
-		{
-			var eventNotifications = response.ReadBodyAs<EventNotificationsBody>(Options.Json.Serializer);
-
-			return eventNotifications.Content!;
-		}
-
-		return null!;
+		return _mittoSocket.SendRequestAsync(request, token);
 	}
 
 	protected override void DisposeCore()

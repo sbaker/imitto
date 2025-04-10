@@ -1,4 +1,6 @@
-﻿namespace IMitto.Producers;
+﻿using IMitto.Net;
+
+namespace IMitto.Producers;
 
 public record PackageProductionResult
 {

@@ -1,15 +1,15 @@
-﻿using IMitto.Net.Models;
-using IMitto.Net.Requests;
+﻿using IMitto.Net.Requests;
+using IMitto.Net.Responses;
 
 namespace IMitto.Net.Clients;
 
 public interface IMittoClientConnection : IMittoConnection
 {
+	bool IsDataAvailable();
+
 	Task ConnectAsync(CancellationToken token = default);
-	
-	Task<EventNotificationsModel> WaitForEventsAsync(CancellationToken token);
 
-	Task SendRequestAsync(AuthenticationRequest authenticationRequest, CancellationToken token);
+	Task SendRequestAsync<TRequest>(TRequest request, CancellationToken token) where TRequest : IMittoRequest;
 
-	Task<T?> ReadResponseAsync<T>(CancellationToken token);
+	Task<TResponse?> ReadResponseAsync<TResponse>(CancellationToken token) where TResponse : IMittoResponse;
 }

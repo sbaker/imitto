@@ -15,27 +15,61 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 	private readonly IMittoAuthenticationHandler _authenticationHandler;
 	private readonly IServerEventManager _eventManager;
 	private readonly IMittoChannelWriterProvider<ConnectionContext> _channelProvider;
-	private readonly IMittoEventListener _eventListener;
 
 	public MittoServerRequestHandler(
 		IOptions<MittoServerOptions> options,
 		ILogger<MittoServerRequestHandler> logger,
 		IMittoAuthenticationHandler authenticationHandler,
 		IServerEventManager eventManager,
-		IMittoChannelWriterProvider<ConnectionContext> channelProvider,
-		IMittoEventListener eventListener)
+		IMittoChannelWriterProvider<ConnectionContext> channelProvider)
 	{
 		_options = options.Value;
 		_logger = logger;
 		_authenticationHandler = authenticationHandler;
 		_eventManager = eventManager;
 		_channelProvider = channelProvider;
-		_eventListener = eventListener;
 	}
 
 	public Task HandleRequestAsync(ConnectionContext context, CancellationToken token = default)
 	{
-		return WaitForAuthenticationAsync(context, token);
+		return HandleAuthenticationAsync(context, token);
+	}
+
+	public async Task HandleAuthenticationAsync(ConnectionContext context, CancellationToken token)
+	{
+		token.ThrowIfCancellationRequested();
+
+		var message = await ListenForRequest<AuthenticationRequest>(context, token);
+
+		_logger.LogTrace("Authentication Message received: {connecitonId} {message}", context.ConnectionId, message);
+
+		if (message is not null)
+		{
+			_logger.LogTrace("Authentication: start {connectionId}", context.ConnectionId);
+			await AuthenticationAsync(context, message, token);
+			_logger.LogTrace("Authentication: end {connectionId}", context.ConnectionId);
+		}
+
+		await HandleAuthorizationAsync(context, token);
+	}
+
+	public async Task HandleAuthorizationAsync(ConnectionContext context, CancellationToken token)
+	{
+		token.ThrowIfCancellationRequested();
+
+		var message = await ListenForRequest<MittoTopicsRequest>(context, token);
+
+		_logger.LogTrace("Topic Registration received: {connecitonId} {message}", context.ConnectionId, message);
+
+		if (message is not null)
+		{
+			var validationResult = await _authenticationHandler.AuthorizeTopicAccess(context, message);
+
+			if (validationResult.IsAuthorized)
+			{
+				await RegisterClientInServerManager(context, message, token);
+			}
+		}
 	}
 
 	private async Task<TRequest?> ListenForRequest<TRequest>(ConnectionContext context, CancellationToken token)
@@ -62,59 +96,6 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 		return message;
 	}
 
-	private protected async Task WaitForAuthenticationAsync(ConnectionContext context, CancellationToken token)
-	{
-		token.ThrowIfCancellationRequested();
-
-		var message = await ListenForRequest<AuthenticationRequest>(context, token);
-
-		_logger.LogTrace("Authentication Message received: {connecitonId} {message}", context.ConnectionId, message);
-
-		if (message is not null)
-		{
-			_logger.LogTrace("Authentication: start {connectionId}", context.ConnectionId);
-			await AuthenticationAsync(context, message, token);
-			_logger.LogTrace("Authentication: end {connectionId}", context.ConnectionId);
-		}
-
-		await WaitForTopicsAsync(context, token);
-	}
-
-	private async Task WaitForTopicsAsync(ConnectionContext context, CancellationToken token)
-	{
-		token.ThrowIfCancellationRequested();
-
-		var message = await ListenForRequest<MittoTopicsRequest>(context, token);
-
-		_logger.LogTrace("Topic Registration received: {connecitonId} {message}", context.ConnectionId, message);
-
-		if (message is not null)
-		{
-			var validationResult = await _authenticationHandler.AuthorizeTopicAccess(context, message);
-
-			if (validationResult.IsAuthorized)
-			{
-				await RegisterClientForNotification(context, message, token);
-			}
-		}
-	}
-
-	private async Task RegisterClientForNotification(ConnectionContext context, MittoTopicsRequest header, CancellationToken token)
-	{
-		_logger.LogTrace("Registering client for events: start {connectionId}", context.ConnectionId);
-
-		var writer = _channelProvider.GetWriter();
-
-		if (await writer.WaitToWriteAsync(token))
-		{
-			await writer.WriteAsync(context, token);
-		
-			_logger.LogTrace("Registered client success: {connectionId}", context.ConnectionId);
-		}
-
-		_logger.LogTrace("Registering client for events: end {connectionId}", context.ConnectionId);
-	}
-
 	private async Task AuthenticationAsync(ConnectionContext context, AuthenticationRequest request, CancellationToken token)
 	{
 		MittoHeader? header = MittoHeader.Error;
@@ -137,6 +118,22 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 		}
 
 		await SendResponse(context, new MittoStatusResponse(body, header), token);
+	}
+
+	private async Task RegisterClientInServerManager(ConnectionContext context, MittoTopicsRequest header, CancellationToken token)
+	{
+		_logger.LogTrace("Registering client for events: start {connectionId}", context.ConnectionId);
+
+		var writer = _channelProvider.GetWriter();
+
+		if (await writer.WaitToWriteAsync(token))
+		{
+			await writer.WriteAsync(context, token);
+		
+			_logger.LogTrace("Registered client success: {connectionId}", context.ConnectionId);
+		}
+
+		_logger.LogTrace("Registering client for events: end {connectionId}", context.ConnectionId);
 	}
 
 	private async Task SendResponse<TBody>(ConnectionContext context, MittoResponse<TBody> response, CancellationToken token = default) where TBody : MittoMessageBody

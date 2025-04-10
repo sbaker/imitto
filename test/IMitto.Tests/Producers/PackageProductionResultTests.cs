@@ -1,5 +1,4 @@
 using IMitto.Producers;
-using Xunit;
 
 namespace IMitto.Tests.Producers;
 

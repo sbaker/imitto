@@ -7,7 +7,6 @@ namespace IMitto.Net.Server;
 
 public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 {
-	private Task? _startedTask = null;
 	private Task? _eventManagerTask = null;
 	private readonly ILogger<MittoServer> _logger;
 	private readonly IMittoRequestHandler _requestHandler;
@@ -46,7 +45,15 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 			.Add(async (next, context, ct) =>
 			{
 				_logger.LogTrace("Middleware: start {connectionId}", context.ConnectionId);
-				await _requestHandler.HandleRequestAsync(context.State, ct).ConfigureAwait(false);
+				await _requestHandler.HandleAuthenticationAsync(context.State, ct).ConfigureAwait(false);
+				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
+
+				await next(context, ct).ConfigureAwait(false);
+			})
+			.Add(async (next, context, ct) =>
+			{
+				_logger.LogTrace("Middleware: start {connectionId}", context.ConnectionId);
+				await _requestHandler.HandleAuthorizationAsync(context.State, ct).ConfigureAwait(false);
 				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
 
 				await next(context, ct).ConfigureAwait(false);
@@ -85,9 +92,11 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 
 						_logger.LogTrace("Initializing client/server workflow: start {connectionId}", connectionState.ConnectionId);
 
-						connectionState.BackgroundTask = Task.Run(async () => {
+						connectionState.BackgroundTask = Task.Run(async () =>
+						{
 							var context = new MiddlewareContext<ConnectionContext>(connectionState);
 							await middleware.HandleAsync(context, token).ConfigureAwait(false);
+
 						}, TokenSource.Token);
 					}
 				}

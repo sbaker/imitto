@@ -10,16 +10,16 @@ public class ChannelMittoEventDispatcher : MittoEventDispatcher
 
 	public ChannelMittoEventDispatcher(
 		ILogger<MittoEventDispatcher> logger,
-		IMittoChannelProvider<EventNotificationsModel> channelProvider) : base(logger)
+		IMittoChannelProvider<EventNotificationsModel> channelProvider)
 	{
 		_channelProvider = channelProvider;
 	}
 
-	public override ValueTask DispatchAsync(EventNotificationsModel notifications)
+	public override ValueTask DispatchAsync(EventNotificationsModel package)
 	{
 		return new ValueTask(Task.Run(() => {
 			var channelWriter = _channelProvider.GetWriter();
-			return channelWriter.WriteAsync(notifications);
+			return channelWriter.WriteAsync(package);
 		}));
 	}
 }
