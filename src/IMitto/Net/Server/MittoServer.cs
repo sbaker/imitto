@@ -66,15 +66,15 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 
 						_logger.LogTrace("Accepting Connections: end;");
 
-						var connectionState = new ConnectionContext(
+						var connectionContext = new ConnectionContext(
 							_eventManager,
 							socket,
 							TokenSource.Token);
 
-						_logger.LogTrace("Initializing client/server workflow: start {connectionId}", connectionState.ConnectionId);
+						_logger.LogTrace("Initializing client/server workflow: start {connectionId}", connectionContext.ConnectionId);
 
-						connectionState.BackgroundTask = Task.Run(async () => {
-							var context = new MiddlewareContext<ConnectionContext>(connectionState);
+						connectionContext.BackgroundTask = Task.Run(async () => {
+							var context = new MiddlewareContext<ConnectionContext>(connectionContext);
 							await middleware.HandleAsync(context, token).ConfigureAwait(false);
 
 						}, TokenSource.Token);
