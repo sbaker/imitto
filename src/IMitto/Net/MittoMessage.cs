@@ -31,6 +31,7 @@ public class MittoMessage<TBody> : MittoMessage, IMittoMessage<TBody> where TBod
 
 	public MittoMessage(TBody body, MittoHeader header) : base(header)
 	{
+		Body = body;
 	}
 
 	public TBody Body { get; set; }

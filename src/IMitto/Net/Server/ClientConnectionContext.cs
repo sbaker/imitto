@@ -7,8 +7,6 @@ namespace IMitto.Net.Server;
 
 public class ClientConnectionContext : Disposables
 {
-	private readonly object _subscription;
-
 	public ClientConnectionContext(ConnectionContext connection, Task eventLoopTask, CancellationToken token)
 	{
 		Connection = connection;
@@ -25,7 +23,7 @@ public class ClientConnectionContext : Disposables
 	{
 		var topics = Connection.Topics;
 		var eventAggregator = Connection.EventAggregator;
-		var subscribeEvents = topics?.ConsumeTopics?.Select(t => 
+		var subscribeEvents = topics?.ConsumeTopics?.Select(t =>
 			eventAggregator.Subscribe(t, (e, eId) => new ActionSubscription(eId, e, OnEvent))
 		).ToArray();
 		Add(subscribeEvents ?? []);
@@ -33,6 +31,13 @@ public class ClientConnectionContext : Disposables
 
 	private async void OnEvent(EventContext context)
 	{
-		await Connection.Socket.SendAsync(new EventNotificationRequest(new() { Content = (EventNotificationsModel)context.GetData() }), CancellationToken.None);
+		var data = context.GetData();
+
+		var eventBody = new EventNotificationRequest(new()
+		{
+			Content = data as EventNotificationsModel,
+		});
+
+		await Connection.Socket.SendAsync(eventBody);
 	}
 }

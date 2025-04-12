@@ -18,5 +18,20 @@
         "DebugTarget": "MittoSampleClient1"
       }
     ]
+  },
+  {
+    "Name": "server / client2",
+    "Projects": [
+      {
+        "Path": "samples\\IMittoSampleServer\\IMittoSampleServer.csproj",
+        "Action": "Start",
+        "DebugTarget": "MittoSampleServer"
+      },
+      {
+        "Path": "samples\\IMittoSampleClient2\\IMittoSampleClient2.csproj",
+        "Action": "Start",
+        "DebugTarget": "MittoSampleClient2"
+      }
+    ]
   }
 ]

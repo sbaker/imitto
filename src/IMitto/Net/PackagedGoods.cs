@@ -13,6 +13,14 @@ public record PackagedGoods
 {
 	internal static EmptyPackagedGoods Empty(string topic) => new(topic);
 
+	public PackagedGoods()
+	{
+	}
+
+	public PackagedGoods(Type producType, string topic) : this(producType, default!, topic)
+	{
+	}
+
 	public PackagedGoods(Type producType, object goods, string topic)
 	{
 		CreatedAt = DateTime.UtcNow;
@@ -22,21 +30,17 @@ public record PackagedGoods
 		Topic = topic;
 	}
 
-	public PackagedGoods(Type producType, string topic) : this(producType, default!, topic)
-	{
-	}
+	public DateTime CreatedAt { get; set; }
 
-	public DateTime CreatedAt { get; }
+	public string ProductType { get; set; }
 
-	public string ProductType { get; }
+	public string ProductName { get; set; }
 
-	public string ProductName { get; }
+	public string Topic { get; set; }
 
-	public string Topic { get; }
+	public object Goods { get; set; }
 
-	public object Goods { get; }
-
-	public bool IsEmpty => Goods == null || Goods is EmptyPackagedGoods;
+	public bool IsEmpty() => Goods == null || Goods is EmptyPackagedGoods;
 
 	public static PackagedGoods<TGoods> From<TGoods>(string topic, PackageProductionResult<TGoods> packageProduction)
 		=> packageProduction.GetPackagedGoods(topic);

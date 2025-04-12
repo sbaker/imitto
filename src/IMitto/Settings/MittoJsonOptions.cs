@@ -22,7 +22,7 @@ public class MittoJsonOptions
 			new MittoBodyConverter<MittoMessageBody>(),
 			new MittoHeaderConverter(),
 			new MittoEventConverter(),
-			new MittoAuthenticationRequestConverter()
+			new MittoEventNotificationsBodyConverter(),
 		}
 	};
 
@@ -31,7 +31,6 @@ public class MittoJsonOptions
 		public JsonTypeInfo GetTypeInfo(Type type, JsonSerializerOptions options)
 		{
 			var typeInfo = JsonTypeInfo.CreateJsonTypeInfo(type, options);
-
 
 			return typeInfo;
 		}

@@ -141,15 +141,7 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 						throw new InvalidOperationException("Socket is not connected or not initialized.");
 					}
 
-					var eventNotifications = await _eventManager.WaitForServerEventsAsync(Connection, token);
-
-					if (eventNotifications == null)
-					{
-						_logger.LogWarning("Event notifications are null.");
-						continue;
-					}
-
-					await _eventDispatcher.DispatchAsync(eventNotifications);
+					await _eventManager.WaitForServerEventsAsync(Connection, token);
 				}
 			}
 			catch (Exception e)

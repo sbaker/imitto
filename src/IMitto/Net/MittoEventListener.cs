@@ -34,19 +34,26 @@ public class MittoEventListener : IMittoEventListener
 
 			if (!context.Socket.DataAvailable) { continue; }
 
-			var message = await context.Socket.ReadAsync<EventNotificationRequest>(token);
-
-			if (message == null) { continue; }
-
-			_logger.LogTrace("Listening for events: received {connectionId}", context.ConnectionId);
-
-			var writer = _channelWriter.GetWriter();
-
-			if (await writer.WaitToWriteAsync(token))
+			try
 			{
-				var eventContext = new ServerEventNotificationsContext(context.ConnectionId, message.Body.Content!);
+				var message = await context.Socket.ReadAsync<EventNotificationRequest>(token);
 
-				await writer.WriteAsync(eventContext, token);
+				if (message == null) { continue; }
+
+				_logger.LogTrace("Listening for events: received {connectionId}", context.ConnectionId);
+
+				var writer = _channelWriter.GetWriter();
+
+				if (await writer.WaitToWriteAsync(token))
+				{
+					var eventContext = new ServerEventNotificationsContext(context.ConnectionId, message.Body.Content!);
+
+					await writer.WriteAsync(eventContext, token);
+				}
+			}
+			catch (Exception e)
+			{
+				_logger.LogError(e, "Error while polling for events: {connectionId}", context.ConnectionId);
 			}
 		}
 

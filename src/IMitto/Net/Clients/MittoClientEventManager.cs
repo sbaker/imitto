@@ -1,4 +1,5 @@
-﻿using IMitto.Channels;
+﻿using IMitto;
+using IMitto.Channels;
 using IMitto.Consumers;
 using IMitto.Local;
 using IMitto.Net.Models;
@@ -6,25 +7,37 @@ using IMitto.Net.Requests;
 using IMitto.Net.Responses;
 using IMitto.Producers;
 using IMitto.Settings;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using System.ComponentModel;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text.Json;
 using Opt = Microsoft.Extensions.Options.Options;
 
 namespace IMitto.Net.Clients;
 
 public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManager
 {
+	private static readonly Type PackageConsumerType = typeof(IMittoPackageConsumer<>);
+	private static readonly MethodInfo PackageConsumeMethod = PackageConsumerType.GetMethod(nameof(IMittoPackageConsumer<int>.ConsumeAsync))!;
+
 	private readonly MittoClientOptions _options;
+	private readonly ILogger<MittoClientEventManager> _logger;
 	private readonly IServiceProvider _serviceProvider;
 	private readonly IMittoChannelReaderProvider<EventNotificationsModel> _readerProvider;
 	private readonly ConcurrentDictionary<string, TopicPackageTypeMapping> _topicTypeMappings;
 
 	public MittoClientEventManager(
+		ILogger<MittoClientEventManager> logger,
 		IOptions<MittoClientOptions> options,
 		IServiceProvider serviceProvider,
 		IMittoChannelReaderProvider<EventNotificationsModel> readerProvider) : base(Opt.Create(options.Value.Events))
 	{
 		_options = options.Value;
+		_logger = logger;
 		_serviceProvider = serviceProvider;
 		_readerProvider = readerProvider;
 		_topicTypeMappings = _options.TypeMappings;
@@ -57,7 +70,7 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 		}
 	}
 
-	public async Task<EventNotificationsModel> WaitForServerEventsAsync(IMittoClientConnection connection, CancellationToken token)
+	public async Task WaitForServerEventsAsync(IMittoClientConnection connection, CancellationToken token)
 	{
 		if (!connection.IsConnected())
 		{
@@ -84,45 +97,109 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 			}
 		}, token);
 
-		while (!connection.IsDataAvailable())
+		while (!token.IsCancellationRequested)
 		{
-			token.ThrowIfCancellationRequested();
-			await Task.Delay(_options.Connection.TaskDelayMilliseconds, token);
+			while (!connection.IsDataAvailable())
+			{
+				token.ThrowIfCancellationRequested();
+				await Task.Delay(_options.Connection.TaskDelayMilliseconds, token);
+			}
+
+			var response = await connection.ReadResponseAsync<EventNotificationsResponse>(token);
+
+			if (response is not null && response.Header.Path == MittoPaths.Topics)
+			{
+				var eventNotifications = response.Body;
+
+				if (eventNotifications?.Content == null)
+				{
+					throw new InvalidOperationException("Event notification is null.");
+				}
+
+				await PublishAsync(eventNotifications.Content.Topic, eventNotifications.Content);
+			}
 		}
-
-		var response = await connection.ReadResponseAsync<EventNotificationsResponse>(token);
-
-		if (response is not null && response.Header.Path == MittoPaths.Topics)
-		{
-			var eventNotifications = response.Body;
-
-			return eventNotifications.Content!;
-		}
-
-		return null!;
 	}
 
 	private void ConfigureTopicMapping(string topic, TopicPackageTypeMapping topicMapping)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(topic);
 
+		//Task<PackageConsumptionResult> ConsumeAsync(TPackage goods);
+		if (topicMapping.IsConsumer)
+		{
+			var consumerType = PackageConsumerType.MakeGenericType(topicMapping.PackageType);
+			var consumers = _serviceProvider.GetServices(consumerType).ToList();
+			var consumeMethod = consumerType.GetMethod(nameof(IMittoPackageConsumer<int>.ConsumeAsync))!;
+			var consumerMapping = new ConsumerMapping(consumers!, consumeMethod, topicMapping.PackageType);
+			Subscribe(new ConsumerMethodInvokerSubscription(topic, _logger, _options, consumerMapping, this));
 
-
+			// TODO: Implement a better way of invoking the consumer method using Expressions or IL.
+		}
 	}
 
-	private sealed class PackageConsumerCallInvoker
+	private sealed class ConsumerMethodInvokerSubscription : Subscription
 	{
-		private static readonly Type PackageConsumerType = typeof(IMittoPackageConsumer<>);
-		
-		//Task<PackageProductionResult> ProduceAsync(string topic, TPackage goods);
-		public PackageConsumerCallInvoker(Func<string, Task<PackageProductionResult>> producer)
+		private readonly ConsumerMapping _consumerMapping;
+		private readonly MittoClientOptions _options;
+		private readonly ILogger _logger;
+
+		public ConsumerMethodInvokerSubscription(string topic, ILogger logger, MittoClientOptions options, ConsumerMapping consumerMapping, IMittoEvents events) : base(topic, events)
 		{
-			InvocationCount = 0;
+			_logger = logger;
+			_options = options;
+			_consumerMapping = consumerMapping;
 		}
 
-		public int InvocationCount { get; } = 0;
+		protected override void InvokeCore(EventContext context)
+		{
+			var data = context.GetData();
 
-		public Task<PackagedGoods> InvokeConsumeAsync(string topic) => Task.FromResult(
-			(PackagedGoods)PackagedGoods.From(topic, PackageProductionResult.Success("Message from client!")));
+			if (data is not EventNotificationsModel eventNotification)
+			{
+				throw new InvalidOperationException($"Invalid data type: {data?.GetType()}");
+			}
+
+			// TODO: Not looping through all consumers...Just the lastt
+			eventNotification.Events.ForEach(async serverEvent =>
+			{
+				if (serverEvent.Event.Package is JsonElement jsonElement)
+				{
+					var package = jsonElement.Deserialize<PackagedGoods>(_options.Json.Serializer);
+
+					if (package?.Goods is not JsonElement elementGoods)
+					{
+						return;
+					}
+
+					var consumers = _consumerMapping.Consumers;
+					var goods = elementGoods.Deserialize(_consumerMapping.PackageType, _options.Json.Serializer);
+
+					for (var i = 0; i < consumers.Count; i++)
+					{
+						var consumer = _consumerMapping.Consumers[i];
+
+						try
+						{
+							var consumerTask = _consumerMapping.ConsumeMethod.Invoke(consumer, [goods]);
+
+							if (consumerTask is Task<PackageConsumptionResult> task)
+							{
+								var result = await task;
+
+								if (!result.Consumed)
+								{
+									throw result.Exception ?? new InvalidOperationException($"Unknown error consuming topic: {serverEvent.Topic}");
+								}
+							}
+						}
+						catch (Exception e)
+						{
+							_logger.LogError(e, "Error while consuming package: {consumerType}; {error}", consumer.GetType().FullName, e.Message);
+						}
+					}
+				}
+			});
+		}
 	}
 }

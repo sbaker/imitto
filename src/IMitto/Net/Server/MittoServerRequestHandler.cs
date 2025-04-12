@@ -77,7 +77,7 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 				context.Topics = message.Body.Topics;
 
 				_logger.LogTrace("Topic Registration: start {connectionId}", context.ConnectionId);
-				await RegisterClientInServerManager(context, message, token);
+				await RegisterClientInServerManager(context, token);
 				_logger.LogTrace("Topic Registration: end {connectionId}", context.ConnectionId);
 			}
 		}
@@ -131,7 +131,7 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 		await SendResponse(context, new MittoStatusResponse(body, header), token);
 	}
 
-	private async Task RegisterClientInServerManager(ConnectionContext context, MittoTopicsRequest header, CancellationToken token)
+	private async Task RegisterClientInServerManager(ConnectionContext context, CancellationToken token)
 	{
 		_logger.LogTrace("Registering client for events: start {connectionId}", context.ConnectionId);
 

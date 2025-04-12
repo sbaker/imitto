@@ -7,5 +7,5 @@ public interface IMittoClientEventManager : IMittoLocalEvents
 {
 	Task WaitForClientEventsAsync(IMittoClientConnection connection, CancellationToken token);
 
-	Task<EventNotificationsModel> WaitForServerEventsAsync(IMittoClientConnection connection, CancellationToken token);
+	Task WaitForServerEventsAsync(IMittoClientConnection connection, CancellationToken token);
 }
