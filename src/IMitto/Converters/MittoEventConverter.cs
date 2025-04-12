@@ -11,7 +11,7 @@ public class MittoEventConverter : JsonConverter<MittoEvent>
 	{
 		var jsonDocument = JsonDocument.ParseValue(ref reader);
 		var rootElement = jsonDocument.RootElement;
-		var package = rootElement.GetProperty("Package").Deserialize<IDictionary<string, object>>();
+		var package = rootElement.GetProperty("Package");
 		
 		return new MittoEvent
 		{

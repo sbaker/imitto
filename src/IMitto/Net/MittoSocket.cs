@@ -69,8 +69,8 @@ public class MittoSocket : Disposables
 
 		var mittoMessage = JsonSerializer.Serialize(message, options: _serializerOptions);
 
-		await _writer.WriteLineAsync(mittoMessage);
-		//_writer.Write(0x1A);
+		await _writer.WriteAsync(mittoMessage);
+		await _writer.WriteAsync((char)_options.Pipeline.CharTerminator);
 		await _writer.FlushAsync(token);
 	}
 }

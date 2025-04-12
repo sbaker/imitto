@@ -17,7 +17,7 @@ public static partial class ServiceCollectionExtensions
 			.AddIMittoChannels<ConnectionContext>(options => {
 				options.ChannelFullMode = BoundedChannelFullMode.Wait;
 			})
-			.AddIMittoChannels<EventNotificationsModel>(options => {
+			.AddIMittoChannels<ServerEventNotificationsContext>(options => {
 				options.ChannelFullMode = BoundedChannelFullMode.Wait;
 			})
 			.AddSingleton<IServerEventManager, ServerEventManager>()

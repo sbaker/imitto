@@ -4,6 +4,7 @@ using IMitto.Channels;
 using IMitto.Local;
 using Microsoft.Extensions.Options;
 using IMitto.Settings;
+using IMitto.Net.Models;
 
 namespace IMitto.Net.Server;
 
@@ -12,18 +13,21 @@ public sealed class ServerEventManager : MittoLocalEvents, IServerEventManager
 	private readonly ConcurrentBag<ClientConnectionContext> _connections = [];
 	private readonly ILogger<ServerEventManager> _logger;
 	private readonly IMittoEventListener _eventListener;
-	private readonly IMittoChannelProvider<ConnectionContext> _channelProvider;
+	private readonly IMittoChannelProvider<ConnectionContext> _connectionChannelProvider;
+	private readonly IMittoChannelProvider<ServerEventNotificationsContext> _eventRoutingChannelProvider;
 
 	public ServerEventManager(
 		IOptions<MittoEventsOptions> options,
 		ILogger<ServerEventManager> logger,
 		IMittoEventListener eventListener,
-		IMittoChannelProvider<ConnectionContext> channelProvider)
+		IMittoChannelProvider<ConnectionContext> connectionChannelProvider,
+		IMittoChannelProvider<ServerEventNotificationsContext> eventRoutingChannelProvider)
 		: base(options)
 	{
 		_logger = logger;
 		_eventListener = eventListener;
-		_channelProvider = channelProvider;
+		_connectionChannelProvider = connectionChannelProvider;
+		_eventRoutingChannelProvider = eventRoutingChannelProvider;
 	}
 
 	private CancellationTokenSource TokenSource { get; set; }
@@ -35,18 +39,36 @@ public sealed class ServerEventManager : MittoLocalEvents, IServerEventManager
 		var startingTask = Task.Run(async () => {
 			try
 			{
-				await Task.Run(async () => {
-					var channelReader = _channelProvider.GetReader();
+				var pollForEventsTask = Task.Run(async () => {
+					var channelReader = _connectionChannelProvider.GetReader();
 
 					while (await channelReader.WaitToReadAsync(token))
 					{
 						token.ThrowIfCancellationRequested();
 
 						var connection = await channelReader.ReadAsync(token);
+
 						var eventLoopTask = _eventListener.PollForEventsAsync(connection, token);
-						_connections.Add(new ClientConnectionContext(connection, eventLoopTask, token));
+						var context = new ClientConnectionContext(connection, eventLoopTask, token);
+						context.SubscribeToEvents();
+						_connections.Add(context);
 					}
-				});
+				}, token);
+				
+				var pollForRoutingTask = Task.Run(async () => {
+					var channelReader = _eventRoutingChannelProvider.GetReader();
+
+					while (await channelReader.WaitToReadAsync(token))
+					{
+						token.ThrowIfCancellationRequested();
+
+						var eventNotification = await channelReader.ReadAsync(token);
+						var connection = _connections.First(c => c.ConnectionId == eventNotification.ConnectionId);
+						await PublishServerEventAsync(eventNotification.Event.Topic, connection.Connection, eventNotification.Event, token);
+					}
+				}, token);
+
+				await Task.WhenAll(pollForEventsTask, pollForRoutingTask);
 			}
 			catch (TaskCanceledException tce)
 			{

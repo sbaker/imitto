@@ -16,7 +16,7 @@ public static class MittoBuilderExtensions
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(topic);
 
-		builder.AddTopicTypeMapping<TPackage>(topic, TopicMappingType.Consumer);
+		builder.AddTopicTypeMapping<TConsumer, TPackage>(topic, TopicMappingType.Consumer);
 		builder.Services.AddTransient<IMittoPackageConsumer<TPackage>, TConsumer>();
 
 		return builder;
@@ -27,7 +27,7 @@ public static class MittoBuilderExtensions
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(topic);
 
-		builder.AddTopicTypeMapping<TPackage>(topic, TopicMappingType.Producer);
+		builder.AddProducerMapping<TPackage>(topic);
 		builder.Services.AddTransient<IMittoProducerProvider<TPackage>, MittoProducerProvider<TPackage>>();
 
 		return builder;

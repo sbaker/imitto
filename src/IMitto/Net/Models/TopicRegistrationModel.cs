@@ -4,8 +4,8 @@ public class TopicRegistrationModel
 {
 
 
-	public string[]? SubscriptionTopics { get; set; }
+	public string[]? ConsumeTopics { get; set; }
 
-	public string[]? PublishTopics { get; set; }
+	public string[]? ProduceTopics { get; set; }
 }
 

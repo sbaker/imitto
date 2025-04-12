@@ -85,6 +85,10 @@ public class SerializingPipeReader : PipeReader
 					break;
 				}
 			}
+			catch (Exception e)
+			{
+
+			}
 			finally
 			{
 				_innerReader.AdvanceTo(buffer.Start, buffer.End);

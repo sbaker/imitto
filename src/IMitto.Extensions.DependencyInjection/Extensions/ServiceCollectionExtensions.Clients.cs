@@ -1,9 +1,12 @@
-﻿using IMitto.Extensions.DependencyInjection;
+﻿using IMitto.Consumers;
+using IMitto.Extensions.DependencyInjection;
 using IMitto.Net.Clients;
 using IMitto.Net.Models;
 using IMitto.Producers;
 using IMitto.Settings;
 using Microsoft.Extensions.DependencyInjection;
+using System.Data;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Schema;
 using System.Text.Json.Serialization.Metadata;
@@ -35,7 +38,22 @@ public static partial class ServiceCollectionExtensions
 
 		private bool StartHostedBackgroundService { get; } = startHostedBackgroundService;
 
-		public void AddTopicTypeMapping<TMapping>(string topic, TopicMappingType mappingType) where TMapping : class
+		public void AddProducerMapping<TPackage>(string topic) where TPackage : class
+		{
+			TopicPackageTypeMapping? typeMapping = null;
+
+			if (_mappings.TryGetValue(topic, out var value))
+			{
+				typeMapping = value;
+				typeMapping.MappingType |= TopicMappingType.Producer;
+			}
+
+			_mappings[topic] = typeMapping ?? new TopicPackageTypeMapping(typeof(TPackage), topic, TopicMappingType.Producer);
+		}
+
+		public void AddTopicTypeMapping<TConsumer, TPackage>(string topic, TopicMappingType mappingType)
+			where TConsumer : class, IMittoPackageConsumer<TPackage>
+			where TPackage : class
 		{
 			TopicPackageTypeMapping? typeMapping = null;
 
@@ -43,9 +61,10 @@ public static partial class ServiceCollectionExtensions
 			{
 				typeMapping = value;
 				typeMapping.MappingType |= mappingType;
+				typeMapping.ConsumerTypes.Add(typeof(TConsumer));
 			}
 
-			_mappings[topic] = typeMapping ?? new TopicPackageTypeMapping(typeof(TMapping), topic, mappingType);
+			_mappings[topic] = typeMapping ?? new TopicPackageTypeMapping(typeof(TPackage), topic, mappingType);
 		}
 
 		public IServiceCollection Build()

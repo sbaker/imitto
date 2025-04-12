@@ -4,6 +4,7 @@ using IMitto.Channels;
 using IMitto.Net.Models;
 using IMitto.Net.Requests;
 using IMitto.Settings;
+using IMitto.Net.Server;
 
 namespace IMitto.Net;
 
@@ -11,12 +12,12 @@ public class MittoEventListener : IMittoEventListener
 {
 	private readonly ILogger<MittoEventListener> _logger;
 	private readonly MittoConnectionOptions _options;
-	private readonly IMittoChannelWriterProvider<EventNotificationsModel> _channelWriter;
+	private readonly IMittoChannelWriterProvider<ServerEventNotificationsContext> _channelWriter;
 
 	public MittoEventListener(
 		ILogger<MittoEventListener> logger,
 		IOptions<MittoConnectionOptions> options,
-		IMittoChannelWriterProvider<EventNotificationsModel> channelWriter)
+		IMittoChannelWriterProvider<ServerEventNotificationsContext> channelWriter)
 	{
 		_logger = logger;
 		_options = options.Value;
@@ -33,24 +34,26 @@ public class MittoEventListener : IMittoEventListener
 
 			if (!context.Socket.DataAvailable) { continue; }
 
-			var message = await context.Socket.ReadAsync<EventNotificationRequest>(token);
-
-			if (message == null) { continue; }
-
-			_logger.LogTrace("Listening for events: received {connectionId}", context.ConnectionId);
-
-			var writer = _channelWriter.GetWriter();
-
-			if (await writer.WaitToWriteAsync(token))
+			try
 			{
-				// TODO: Add code to publish an event received from client to other clients listening on that topic.
-				// TODO: Also, side note: the client that sent the package should not receive the
-				// TODO: same package and publish the event locally after sending it to the server
-				// TODO: but might need to verify before publishing. Then again the server should
-				// TODO: respond the client with its permission (or if it applies) to publish that event locally 
+				var message = await context.Socket.ReadAsync<EventNotificationRequest>(token);
 
-				// TODO: Nothing is listening to this channel yet. Need to publish to the connected clients.
-				await writer.WriteAsync(message.Body.Content!, token);
+				if (message == null) { continue; }
+
+				_logger.LogTrace("Listening for events: received {connectionId}", context.ConnectionId);
+
+				var writer = _channelWriter.GetWriter();
+
+				if (await writer.WaitToWriteAsync(token))
+				{
+					var eventContext = new ServerEventNotificationsContext(context.ConnectionId, message.Body.Content!);
+
+					await writer.WriteAsync(eventContext, token);
+				}
+			}
+			catch (Exception e)
+			{
+				_logger.LogError(e, "Error while polling for events: {connectionId}", context.ConnectionId);
 			}
 		}
 

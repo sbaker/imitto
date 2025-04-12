@@ -119,7 +119,9 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 
 		await Connection!.SendRequestAsync(new AuthenticationRequest(authBody, authHeader), token);
 		var response = await Connection.ReadResponseAsync<MittoStatusResponse>(token);
-		return response!.Body.Status;
+
+		Connection.ConnectionId = response!.Header.ConnectionId;
+		return response.Body.Status;
 	}
 
 	private Task StartEventLoopsAsync(CancellationToken token)
@@ -139,15 +141,7 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 						throw new InvalidOperationException("Socket is not connected or not initialized.");
 					}
 
-					var eventNotifications = await _eventManager.WaitForServerEventsAsync(Connection, token);
-
-					if (eventNotifications == null)
-					{
-						_logger.LogWarning("Event notifications are null.");
-						continue;
-					}
-
-					await _eventDispatcher.DispatchAsync(eventNotifications);
+					await _eventManager.WaitForServerEventsAsync(Connection, token);
 				}
 			}
 			catch (Exception e)

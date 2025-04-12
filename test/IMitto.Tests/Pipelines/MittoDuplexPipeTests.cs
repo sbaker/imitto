@@ -3,6 +3,7 @@ using System.Text;
 using IMitto.Net.Models;
 using IMitto.Converters;
 using IMitto.Settings;
+using IMitto.Net;
 
 namespace IMitto.Tests.Pipelines;
 
@@ -28,7 +29,7 @@ public class MittoDuplexPipeTests
 	{
 		// Arrange
 		var json = new MittoJsonOptions();
-		json.Serializer.Converters.Add(new MittoStringBodyConverter());
+		//json.Serializer.Converters.Add(new MittoBodyConverter<MittoMessage>());
 		var options = new MittoPipeOptions(json, Encoding.UTF8);
 
 		var stream = new MemoryStream(new byte[158]);

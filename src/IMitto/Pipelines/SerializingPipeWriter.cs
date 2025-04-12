@@ -52,8 +52,11 @@ public class SerializingPipeWriter : PipeWriter
 	public async Task WriteAsync<T>(T data, CancellationToken token = default)
 	{
 		var serializer = _options.CreateDefaultWriterSerializer<T>();
+		
 		var serializedData = serializer(data);
+		
 		var bytes = _options.Encoding.GetBytes(serializedData + (char)_options.CharTerminator);
+
 		var memory = GetMemory(bytes.Length);
 
 		bytes.CopyTo(memory.Span);
