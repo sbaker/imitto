@@ -10,14 +10,16 @@ public class ClientConnectionContext : Disposables
 	public ClientConnectionContext(ConnectionContext connection, Task eventLoopTask, CancellationToken token)
 	{
 		Connection = connection;
-		EventLoopTask = eventLoopTask;
+	}
+
+	public ClientConnectionContext(ConnectionContext connection, CancellationToken token)
+	{
+		Connection = connection;
 	}
 
 	public string ConnectionId => Connection.ConnectionId;
 
 	public ConnectionContext Connection { get; private set; }
-
-	public Task EventLoopTask { get; private set; }
 
 	public void SubscribeToEvents()
 	{
@@ -38,6 +40,6 @@ public class ClientConnectionContext : Disposables
 			Content = data as EventNotificationsModel,
 		});
 
-		await Connection.Socket.SendAsync(eventBody);
+		await Connection.Socket.SendAsync(eventBody).Await();
 	}
 }

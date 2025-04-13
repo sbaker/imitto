@@ -5,12 +5,7 @@ public interface IMiddlewareHandler
 	Task HandleAsync(MiddlewareContext context, CancellationToken token);
 }
 
-public interface IMiddlewareHandler<T>
+public interface IMiddlewareHandler<TContext>
 {
-	Task HandleAsync(MiddlewareContext<T> context, CancellationToken token);
+	Task HandleAsync(TContext context, CancellationToken token);
 }
-
-//public interface IMiddlewareChainHandler<T>
-//{
-//	Task HandleAsync(MiddlewareAction<T> next, MiddlewareContext<T> context, CancellationToken token);
-//}

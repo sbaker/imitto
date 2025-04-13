@@ -6,6 +6,11 @@ public interface IMittoResponse : IMittoMessage
 {
 }
 
+public interface IMittoResponse<TBody> : IMittoResponse, IMittoMessage<TBody> where TBody : MittoMessageBody
+{
+
+}
+
 public abstract class MittoResponse : MittoMessage, IMittoResponse
 {
 	public MittoResponse()
@@ -18,7 +23,7 @@ public abstract class MittoResponse : MittoMessage, IMittoResponse
 	}
 }
 
-public class MittoResponse<TBody> : MittoMessage<TBody>, IMittoResponse where TBody : MittoMessageBody
+public class MittoResponse<TBody> : MittoMessage<TBody>, IMittoResponse<TBody>, IMittoResponse where TBody : MittoMessageBody
 {
 	public MittoResponse()
 	{

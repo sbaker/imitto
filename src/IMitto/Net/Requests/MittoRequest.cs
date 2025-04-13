@@ -6,6 +6,10 @@ public interface IMittoRequest : IMittoMessage
 {
 }
 
+public interface IMittoRequest<TBody> : IMittoRequest, IMittoMessage<TBody> where TBody : MittoMessageBody
+{
+}
+
 public abstract class MittoRequest : MittoMessage, IMittoRequest
 {
 	protected MittoRequest()
@@ -18,7 +22,7 @@ public abstract class MittoRequest : MittoMessage, IMittoRequest
 	}
 }
 
-public class MittoRequest<TBody> : MittoMessage<TBody>, IMittoRequest where TBody : MittoMessageBody
+public class MittoRequest<TBody> : MittoMessage<TBody>, IMittoRequest<TBody> where TBody : MittoMessageBody
 {
 	public MittoRequest()
 	{

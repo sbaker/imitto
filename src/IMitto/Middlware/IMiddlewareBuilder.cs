@@ -9,11 +9,11 @@ public interface IMiddlewareBuilder
 	IMiddlewareHandler Build();
 }
 
-public interface IMiddlewareBuilder<T>
+public interface IMiddlewareBuilder<TContext>
 {
-	IMiddlewareBuilder<T> Add(MiddlewareBuilderFunc<T> action);
+	IMiddlewareBuilder<TContext> Add(MiddlewareBuilderFunc<TContext> action);
 
-	IMiddlewareBuilder<T> Add(IMiddlewareHandler<T> handler);
+	IMiddlewareBuilder<TContext> Add(IMiddlewareHandler<TContext> handler);
 
-	IMiddlewareHandler<T> Build();
+	IMiddlewareHandler<TContext> Build();
 }

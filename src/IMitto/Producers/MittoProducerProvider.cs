@@ -56,7 +56,7 @@ public sealed class MittoProducerProvider<TPackage> : IMittoProducerProvider<TPa
 
 			var result = new PackageProductionResult<TPackage>(package);
 
-			await callback(result);
+			await callback(result).Await();
 
 			return result;
 		}

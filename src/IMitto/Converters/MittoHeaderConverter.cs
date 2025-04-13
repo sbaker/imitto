@@ -30,12 +30,6 @@ internal class MittoHeaderConverter : JsonConverter<MittoHeader>
 			writer.WriteStringValue(value.Action.ToString());
 		}
 
-		if (value.Length.HasValue)
-		{
-			writer.WritePropertyName(nameof(value.Length));
-			writer.WriteNumberValue(value.Length.Value);
-		}
-
 		if (value.Result is not null)
 		{
 			writer.WritePropertyName(nameof(value.Result));
@@ -46,6 +40,12 @@ internal class MittoHeaderConverter : JsonConverter<MittoHeader>
 		{
 			writer.WritePropertyName(nameof(value.ConnectionId));
 			writer.WriteStringValue(value.ConnectionId?.ToString());
+		}
+
+		if (value.Version is not null)
+		{
+			writer.WritePropertyName(nameof(value.Version));
+			writer.WriteStringValue(value.Version?.ToString());
 		}
 
 		foreach (var item in value)

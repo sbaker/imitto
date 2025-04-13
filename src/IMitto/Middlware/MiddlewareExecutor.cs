@@ -13,7 +13,7 @@ public sealed class MiddlewareExecutor
 		return Instance.ExecuteMiddlewareAsync(collection, state, token);
 	}
 
-	public static Task ExecuteAsync<T>(MiddlewareCollection<T> collection, MiddlewareContext<T> state, CancellationToken token)
+	public static Task ExecuteAsync<TContext>(MiddlewareCollection<TContext> collection, TContext state, CancellationToken token)
 	{
 		return Instance.ExecuteMiddlewareAsync(collection, state, token);
 	}
@@ -41,7 +41,7 @@ public sealed class MiddlewareExecutor
 		}
 	}
 
-	private Task ExecuteMiddlewareAsync<T>(MiddlewareCollection<T> collection, MiddlewareContext<T> state, CancellationToken token)
+	private Task ExecuteMiddlewareAsync<TContext>(MiddlewareCollection<TContext> collection, TContext context, CancellationToken token)
 	{
 		if (collection.Count == 0)
 		{
@@ -50,9 +50,9 @@ public sealed class MiddlewareExecutor
 
 		var count = 0;
 
-		return Next(state, token);
+		return Next(context, token);
 
-		Task Next(MiddlewareContext<T> context, CancellationToken token)
+		Task Next(TContext context, CancellationToken token)
 		{
 			if (count >= collection.Count)
 			{

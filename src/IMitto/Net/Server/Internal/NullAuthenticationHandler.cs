@@ -1,18 +1,19 @@
 ﻿using Microsoft.Extensions.Logging;
 using IMitto.Net.Requests;
 using IMitto.Net.Server.Results;
+using IMitto.Net.Models;
 
-namespace IMitto.Net.Server;
+namespace IMitto.Net.Server.Internal;
 
 public class NullAuthenticationHandler(ILogger<NullAuthenticationHandler> logger) : IMittoAuthenticationHandler
 {
-	public Task<TopicAuthorizationResult> AuthorizeTopicAccess(ConnectionContext context, MittoTopicsRequest message)
+	public Task<TopicAuthorizationResult> AuthorizeTopicAccessAsync(ConnectionContext context, IMittoRequest<MittoTopicMessageBody> request)
 	{
 		logger.LogTrace("Authorized");
 		return Task.FromResult(TopicAuthorizationResult.Success);
 	}
 
-	public Task<bool> HandleAuthenticationAsync(ConnectionContext context, CancellationToken token = default)
+	public Task<bool> HandleAuthenticationAsync(ConnectionContext context, IMittoRequest<MittoAuthenticationMessageBody> request, CancellationToken token = default)
 	{
 		logger.LogTrace("Authenticated");
 		return Task.FromResult(true);

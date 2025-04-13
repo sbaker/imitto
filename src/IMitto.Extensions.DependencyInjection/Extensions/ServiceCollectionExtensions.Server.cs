@@ -4,6 +4,7 @@ using IMitto.Net;
 using IMitto.Storage;
 using System.Threading.Channels;
 using IMitto.Extensions.DependencyInjection;
+using IMitto.Net.Server.Internal;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.Extensions.DependencyInjection;

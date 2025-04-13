@@ -2,11 +2,7 @@
 
 public class MittoHeader : Dictionary<string, object?>
 {
-	public static readonly MittoHeader Error = new()
-	{
-		Action = MittoEventType.Error,
-		Result = MittoEventType.Error,
-	};
+	public static readonly MittoHeader Error = CreateHeader(MittoEventType.Error);
 
 	public MittoHeader()
 	{
@@ -15,74 +11,42 @@ public class MittoHeader : Dictionary<string, object?>
 	public MittoHeader(IDictionary<string, object?> headers)
 	{
 		if (headers.TryGetValue(nameof(ConnectionId), out var connectionId)) ConnectionId = connectionId?.ToString();
+		if (headers.TryGetValue(nameof(Version), out var version)) Version = version?.ToString()!;
 		if (headers.TryGetValue(nameof(Path), out object? value)) Path = value?.ToString();
 		if (headers.ContainsKey(nameof(Action))) Action = ParseEventType(headers[nameof(Action)]);
 		if (headers.ContainsKey(nameof(Result))) Result = ParseEventType(headers[nameof(Result)]);
-		if (headers.TryGetValue(nameof(Length), out object? length)) Length = length as int?;
 
 		static MittoEventType? ParseEventType(object? value)
 		{
 			var stringValue = value?.ToString();
 
-			if (string.IsNullOrEmpty(stringValue) ) return null;
+			if (string.IsNullOrEmpty(stringValue)) return null;
 
 			return Enum.Parse<MittoEventType>(stringValue);
 		}
 	}
 
-	public static MittoHeader Authorization(MittoEventType? result = null, string? connectionId = null) => new()
+	public static MittoHeader Authorization(MittoEventType? result = null, string? connectionId = null) => CreateHeader(result, MittoEventType.Authentication, connectionId);
+
+	public static MittoHeader CreateHeader(MittoEventType? result, MittoEventType? action = null, string? connectionId = null, string? path = null)
 	{
-		Path = MittoPaths.Auth,
-		Action = MittoEventType.Authentication,
-		Result = result,
-		ConnectionId = connectionId,
-	};
+		return new()
+		{
+			Path = path ?? MittoPaths.Auth,
+			Action = MittoEventType.Authentication,
+			Result = result,
+			ConnectionId = connectionId,
+			Version = MittoConstants.Version,
+		};
+	}
 
 	public string? ConnectionId { get; set; }
 
 	public string? Path { get; set; }
 
-	//public TansmittoEnumHeaderValue<MittoEventType>? Action { get; set; }
 	public MittoEventType? Action { get; set; }
-
-	//public TansmittoEnumHeaderValue<MittoEventType>? Result { get; set; }
+	
 	public MittoEventType? Result { get; set; }
 
-	public int? Length { get; set; }
+	public string? Version { get; internal set; }
 }
-
-//public class MittoHeaderValue
-//{
-//	public MittoHeaderValue(string? value = default)
-//		=> Value = value;
-
-//	public virtual string? Value { get; set; }
-
-//	public static implicit operator string?(MittoHeaderValue value)
-//		=> value.Value;
-
-//	public static implicit operator MittoHeaderValue(string value)
-//		=> new(value);
-//}
-
-//public class TansmittoEnumHeaderValue<TEnum> : MittoHeaderValue where TEnum : struct
-//{
-//	private TEnum _value = default;
-
-//	public TansmittoEnumHeaderValue()
-//	{
-//	}
-
-//	public TansmittoEnumHeaderValue(TEnum value)
-//	{
-//		_value = value;
-//	}
-
-//	public override string? Value
-//	{
-//		get => _value.ToString();
-//		set => _value = value is not null
-//			? Enum.Parse<TEnum>(value)
-//			: _value = default;
-//	}
-//}

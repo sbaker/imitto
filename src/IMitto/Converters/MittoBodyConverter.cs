@@ -11,7 +11,13 @@ public class MittoBodyConverter<TBody> : JsonConverter<TBody> where TBody : Mitt
 		var jsonDocument = JsonDocument.ParseValue(ref reader);
 
 		var result = jsonDocument.Deserialize<TBody>() ?? new();
-		result.RawBody = jsonDocument.RootElement.ToString();
+
+		result.BodyElement = jsonDocument.RootElement;
+
+		if (result.BodyElement.TryGetProperty(options.PropertyNamingPolicy!.ConvertName(nameof(MittoMessageBody<int>.Content)), out var value))
+		{
+			result.BodyElement = value;
+		}
 
 		return result;
 	}

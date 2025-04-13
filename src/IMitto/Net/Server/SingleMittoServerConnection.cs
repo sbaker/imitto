@@ -15,7 +15,7 @@ public class SingleMittoServerConnection : MittoServerConnection
 	public override async Task<MittoSocket> AcceptAsync(CancellationToken token = default)
 	{
 		var connectionOptions = Options.Connection;
-		var tcpClient = await _listener.AcceptTcpClientAsync(token);
+		var tcpClient = await _listener.AcceptTcpClientAsync(token).Await();
 
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;
 		tcpClient.SendTimeout = connectionOptions.ConnectionTimeout;

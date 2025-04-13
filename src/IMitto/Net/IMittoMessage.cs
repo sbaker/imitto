@@ -1,4 +1,5 @@
 ﻿using IMitto.Net.Models;
+using IMitto.Settings;
 
 namespace IMitto.Net;
 
@@ -10,11 +11,10 @@ public interface IMittoMessage
 
 	MittoMessageBody GetBody();
 
-	TBody GetBody<TBody>() where TBody : notnull, MittoMessageBody;
+	TBody GetBody<TBody>(MittoJsonOptions? options = null);
 }
-public interface IMittoMessage<TBody> where TBody : MittoMessageBody
+
+public interface IMittoMessage<TBody> : IMittoMessage where TBody : MittoMessageBody
 {
 	TBody Body { get; set; }
-
-	MittoHeader Header { get; set; }
 }
