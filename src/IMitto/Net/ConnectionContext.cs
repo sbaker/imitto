@@ -11,8 +11,6 @@ public class ConnectionContext : Disposable
 	{
 		EventAggregator = eventAggregator;
 		Socket = socket;
-
-		eventAggregator.Publish(ServerEventConstants.ConnectionReceivedEvent, this);
 	}
 
 	public string ConnectionId { get; } = Guid.NewGuid().ToString();

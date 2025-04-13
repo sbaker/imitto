@@ -1,8 +1,12 @@
-﻿namespace IMitto.Net.Models;
+﻿using System.Text.Json;
+
+namespace IMitto.Net.Models;
 
 public class MittoMessageBody
 {
 	internal string? RawBody { get; set; }
+
+	internal JsonElement BodyElement { get; set; }
 
 
 	public static implicit operator MittoMessageBody(string? content)

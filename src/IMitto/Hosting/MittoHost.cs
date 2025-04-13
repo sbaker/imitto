@@ -39,7 +39,7 @@ public abstract class MittoHost : Disposables, IMittoHost
 	{
 		_tokenSource ??= CreateLinkedSource(token);
 
-		await RunInternalAsync(_tokenSource.Token);
+		await RunInternalAsync(_tokenSource.Token).Await();
 	}
 
 	public virtual Task StopAsync(CancellationToken? token = null)

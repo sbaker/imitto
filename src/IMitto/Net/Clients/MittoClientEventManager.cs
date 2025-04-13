@@ -52,21 +52,21 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 	{
 		var reader = _readerProvider.GetReader();
 
-		while (await reader.WaitToReadAsync(token))
+		while (await reader.WaitToReadAsync(token).Await())
 		{
 			if (!connection.IsConnected())
 			{
 				throw new InvalidOperationException("Socket is not connected or not initialized.");
 			}
 
-			var package = await reader.ReadAsync(token);
+			var package = await reader.ReadAsync(token).Await();
 
 			var eventNotificationBody = new EventNotificationsBody
 			{
 				Content = package,
 			};
 
-			await connection.SendRequestAsync(new EventNotificationRequest(eventNotificationBody), token);
+			await connection.SendRequestAsync(new EventNotificationRequest(eventNotificationBody), token).Await();
 		}
 	}
 
@@ -85,7 +85,8 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 			Header = new()
 			{
 				Path = MittoPaths.Topics,
-				Action = MittoEventType.Consume
+				Action = MittoEventType.Consume,
+				Version = MittoConstants.Version,
 			},
 			Body = new()
 			{
@@ -95,17 +96,33 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 					ConsumeTopics = consumerTopics,
 				}
 			}
-		}, token);
+		}, token).Await();
 
+		while (!connection.IsDataAvailable())
+		{
+			token.ThrowIfCancellationRequested();
+			await Task.Delay(_options.Connection.TaskDelayMilliseconds, token).Await();
+		}
+
+		var statusResponse = (await connection.ReadResponseAsync<MittoStatusResponse>(token).Await())!;
+
+		if (statusResponse.Body.Status.Success)
+		{
+			await PollForEventNotifications(connection, token).Await();
+		}
+	}
+
+	private async Task PollForEventNotifications(IMittoClientConnection connection, CancellationToken token)
+	{
 		while (!token.IsCancellationRequested)
 		{
 			while (!connection.IsDataAvailable())
 			{
 				token.ThrowIfCancellationRequested();
-				await Task.Delay(_options.Connection.TaskDelayMilliseconds, token);
+				await Task.Delay(_options.Connection.TaskDelayMilliseconds, token).Await();
 			}
 
-			var response = await connection.ReadResponseAsync<EventNotificationsResponse>(token);
+			var response = await connection.ReadResponseAsync<MittoResponse<EventNotificationsBody>>(token).Await();
 
 			if (response is not null && response.Header.Path == MittoPaths.Topics)
 			{
@@ -116,7 +133,7 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 					throw new InvalidOperationException("Event notification is null.");
 				}
 
-				await PublishAsync(eventNotifications.Content.Topic, eventNotifications.Content);
+				await PublishAsync(eventNotifications.Content.Topic, eventNotifications.Content).Await();
 			}
 		}
 	}
@@ -185,7 +202,7 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 
 							if (consumerTask is Task<PackageConsumptionResult> task)
 							{
-								var result = await task;
+								var result = await task.Await();
 
 								if (!result.Consumed)
 								{

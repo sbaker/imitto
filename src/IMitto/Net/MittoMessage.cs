@@ -1,4 +1,6 @@
 ﻿using IMitto.Net.Models;
+using IMitto.Settings;
+using System.Text.Json;
 
 namespace IMitto.Net;
 
@@ -15,7 +17,7 @@ public abstract class MittoMessage(MittoHeader header) : IMittoMessage
 
 	public abstract MittoMessageBody GetBody();
 
-	public abstract TBody GetBody<TBody>() where TBody : notnull, MittoMessageBody;
+	public abstract TBody GetBody<TBody>(MittoJsonOptions? options = null);
 }
 
 public class MittoMessage<TBody> : MittoMessage, IMittoMessage<TBody> where TBody : MittoMessageBody
@@ -41,10 +43,19 @@ public class MittoMessage<TBody> : MittoMessage, IMittoMessage<TBody> where TBod
 		return Body;
 	}
 
-	public override TBody1 GetBody<TBody1>()
+	public override TBody1 GetBody<TBody1>(MittoJsonOptions? options = null)
 	{
-		var obj = Body as TBody1;
-		return obj;
+		if (options is null)
+		{
+			options = MittoOptions.Default.Json;
+		}
+
+		if (Body is TBody1 body)
+		{
+			return body;
+		}
+
+		return JsonSerializer.Deserialize<TBody1>(Body.BodyElement, options.Serializer)!;
 	}
 
 	public override bool HasBody()

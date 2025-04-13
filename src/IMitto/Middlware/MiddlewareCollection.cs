@@ -16,17 +16,17 @@ public sealed class MiddlewareCollection : List<MiddlewareBuilderFunc>, IMiddlew
 
 	public Task HandleAsync(MiddlewareContext context, CancellationToken token)
 	{
-		return MiddlewareExecutor.ExecuteAsync(this, context, token).Await();
+		return MiddlewareExecutor.ExecuteAsync(this, context, token);
 	}
 }
 
-public sealed class MiddlewareCollection<T> : List<MiddlewareBuilderFunc<T>>, IMiddlewareHandler<T>
+public sealed class MiddlewareCollection<TContext> : List<MiddlewareBuilderFunc<TContext>>, IMiddlewareHandler<TContext>
 {
 	public MiddlewareCollection() : base()
 	{
 	}
 
-	public MiddlewareCollection(IEnumerable<MiddlewareBuilderFunc<T>> collection) : base(collection)
+	public MiddlewareCollection(IEnumerable<MiddlewareBuilderFunc<TContext>> collection) : base(collection)
 	{
 	}
 
@@ -34,8 +34,8 @@ public sealed class MiddlewareCollection<T> : List<MiddlewareBuilderFunc<T>>, IM
 	{
 	}
 
-	public Task HandleAsync(MiddlewareContext<T> context, CancellationToken token)
+	public Task HandleAsync(TContext context, CancellationToken token)
 	{
-		return MiddlewareExecutor.ExecuteAsync(this, context, token).Await();
+		return MiddlewareExecutor.ExecuteAsync(this, context, token);
 	}
 }

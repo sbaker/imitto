@@ -1,5 +1,6 @@
 ﻿using IMitto.Net.Models;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace IMitto.Converters;
 
@@ -35,3 +36,19 @@ public class MittoEventNotificationsBodyConverter : MittoBodyConverter<EventNoti
 		writer.WriteEndObject();
 	}
 }
+
+//public abstract class MessageBodyOfTConverter<TContent> : JsonConverter<MittoMessageBody<TContent>>
+//{
+//}
+
+//public class EventNotificationsModelConverter : MessageBodyOfTConverter<EventNotificationsModel>
+//{
+//	public override MittoMessageBody<EventNotificationsModel>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+//	{
+//		return null;
+//	}
+
+//	public override void Write(Utf8JsonWriter writer, MittoMessageBody<EventNotificationsModel> value, JsonSerializerOptions options)
+//	{
+//	}
+//}

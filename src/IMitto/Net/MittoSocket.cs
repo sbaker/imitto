@@ -50,7 +50,7 @@ public class MittoSocket : Disposables
 
 	public virtual async Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default)
 	{
-		var requestRaw = await _reader.ReadLineAsync(token);
+		var requestRaw = await _reader.ReadLineAsync(token).Await();
 
 		if (requestRaw == null)
 		{
@@ -69,8 +69,8 @@ public class MittoSocket : Disposables
 
 		var mittoMessage = JsonSerializer.Serialize(message, options: _serializerOptions);
 
-		await _writer.WriteAsync(mittoMessage);
-		await _writer.WriteAsync((char)_options.Pipeline.CharTerminator);
-		await _writer.FlushAsync(token);
+		await _writer.WriteAsync(mittoMessage).Await();
+		await _writer.WriteAsync((char)_options.Pipeline.CharTerminator).Await();
+		await _writer.FlushAsync(token).Await();
 	}
 }

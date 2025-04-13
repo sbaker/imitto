@@ -7,7 +7,7 @@ public class TopicAuthorizationResult
 		IsAuthorized = true,
 	};
 
-	public Dictionary<string, string> AccessAuthorizationDetails { get; private set; } = [];
+	public Dictionary<string, object> AccessAuthorizationDetails { get; } = [];
 
 	public bool IsAuthorized { get; private set; }
 }

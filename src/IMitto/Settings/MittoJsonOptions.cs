@@ -11,6 +11,7 @@ public class MittoJsonOptions
 	public JsonSerializerOptions Serializer { get; set; } = new JsonSerializerOptions
 	{
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+		PropertyNameCaseInsensitive = true,
 		RespectNullableAnnotations = true,
 		//TypeInfoResolver = new MittoTypeInfoResolver(),
 		UnknownTypeHandling = JsonUnknownTypeHandling.JsonElement,
@@ -19,10 +20,11 @@ public class MittoJsonOptions
 		PreferredObjectCreationHandling = JsonObjectCreationHandling.Replace,
 		Converters = {
 			new JsonStringEnumConverter(),
-			new MittoBodyConverter<MittoMessageBody>(),
 			new MittoHeaderConverter(),
-			new MittoEventConverter(),
+			//new EventNotificationsModelConverter(),
 			new MittoEventNotificationsBodyConverter(),
+			new MittoEventConverter(),
+			new MittoBodyConverter<MittoMessageBody>(),
 		}
 	};
 

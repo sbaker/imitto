@@ -15,7 +15,7 @@ namespace IMitto.Tests.Middleware
 			MiddlewareBuilderFunc<string> action = (next, context, token) => {
 				middlewareExecuted = true;
 				Assert.NotNull(context);
-				Assert.Same(expected, context.State);
+				Assert.Same(expected, context);
 				return Task.CompletedTask;
 			};
 
@@ -53,12 +53,12 @@ namespace IMitto.Tests.Middleware
 			builder.Add((next, context, token) => {
 				middlewareExecuted = true;
 				Assert.NotNull(context);
-				Assert.Same(expected, context.State);
+				Assert.Same(expected, context);
 				return Task.CompletedTask;
 			});
 
 			var handler = builder.Build();
-			var context = new MiddlewareContext<string>("test");
+			var context = "test";
 
 			// Act
 			await handler.HandleAsync(context, CancellationToken.None);
@@ -81,12 +81,12 @@ namespace IMitto.Tests.Middleware
 			builder.Add((next, context, token) => {
 				middlewareExecuted = true;
 				Assert.NotNull(context);
-				Assert.Same(expected, context.State);
+				Assert.Same(expected, context);
 				return Task.CompletedTask;
 			});
 
 			var middleware = builder.Build();
-			var context = new MiddlewareContext<string>("test");
+			var context = "test";
 
 			// Act
 			await middleware.HandleAsync(context, CancellationToken.None);
@@ -94,7 +94,7 @@ namespace IMitto.Tests.Middleware
 			// Assert
 			Assert.True(middlewareExecuted);
 			Assert.True(handler.MiddlewareExecuted);
-			Assert.Same(handler.Expected, context.State);
+			Assert.Same(handler.Expected, context);
 		}
 
 		private class MockMiddlewareHandler<T> : IMiddlewareHandler<T>
@@ -108,12 +108,12 @@ namespace IMitto.Tests.Middleware
 
 			public bool MiddlewareExecuted { get; set; }
 
-			public Task HandleAsync(MiddlewareContext<T> context, CancellationToken token)
+			public Task HandleAsync(T context, CancellationToken token)
 			{
 				MiddlewareExecuted = true;
 
 				Assert.NotNull(context);
-				Assert.Same(Expected, context.State);
+				Assert.Equal(Expected, context);
 				return Task.CompletedTask;
 			}
 		}

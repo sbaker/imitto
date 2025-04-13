@@ -63,7 +63,7 @@ public class SerializingPipeWriter : PipeWriter
 		
 		Advance(bytes.Length);
 
-		var result = await FlushAsync(token);
+		var result = await FlushAsync(token).Await();
 		
 		if (result.IsCanceled)
 		{

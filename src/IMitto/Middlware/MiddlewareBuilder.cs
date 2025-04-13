@@ -21,7 +21,7 @@ public class MiddlewareBuilder : IMiddlewareBuilder
 		return new RootMiddlewareHandler(middleware);
 	}
 
-	private class RootMiddlewareHandler : IMiddlewareHandler
+	protected class RootMiddlewareHandler : IMiddlewareHandler
 	{
 		private readonly MiddlewareCollection _middleware;
 		
@@ -37,42 +37,42 @@ public class MiddlewareBuilder : IMiddlewareBuilder
 	}
 }
 
-public class MiddlewareBuilder<T> : IMiddlewareBuilder<T>
+public class MiddlewareBuilder<TContext> : IMiddlewareBuilder<TContext>
 {
-	protected readonly MiddlewareCollection<T> middleware = [];
+	protected readonly MiddlewareCollection<TContext> middleware = [];
 
-	public IMiddlewareBuilder<T> Add(MiddlewareBuilderFunc<T> action)
+	public IMiddlewareBuilder<TContext> Add(MiddlewareBuilderFunc<TContext> action)
 	{
 		middleware.Add(action);
 		return this;
 	}
 
-	public IMiddlewareBuilder<T> Add(IMiddlewareHandler<T> handler)
+	public IMiddlewareBuilder<TContext> Add(IMiddlewareHandler<TContext> handler)
 	{
-		var middlewareWrapper = new MiddlewareChainHandler<T>(handler);
+		var middlewareWrapper = new MiddlewareChainHandler(handler);
 		middleware.Add(middlewareWrapper.HandleAsync);
 		return this;
 	}
 
-	public IMiddlewareHandler<T> Build()
+	public IMiddlewareHandler<TContext> Build()
 	{
-		return new RootMiddlewareHandler<T>(middleware);
+		return new RootMiddlewareHandler(middleware);
 	}
 
-	private class RootMiddlewareHandler<TState>(MiddlewareCollection<TState> middleware) : IMiddlewareHandler<TState>
+	private class RootMiddlewareHandler(MiddlewareCollection<TContext> middleware) : IMiddlewareHandler<TContext>
 	{
-		public Task HandleAsync(MiddlewareContext<TState> context, CancellationToken token)
+		public Task HandleAsync(TContext context, CancellationToken token)
 		{
 			return middleware.HandleAsync(context, token);
 		}
 	}
 
-	public sealed class MiddlewareChainHandler<TState>(IMiddlewareHandler<TState> innerHandler)
+	public sealed class MiddlewareChainHandler(IMiddlewareHandler<TContext> innerHandler)
 	{
-		public async Task HandleAsync(MiddlewareFunc<TState> next, MiddlewareContext<TState> context, CancellationToken token)
+		public async Task HandleAsync(MiddlewareFunc<TContext> next, TContext context, CancellationToken token)
 		{
-			await innerHandler.HandleAsync(context, token);
-			await next.Invoke(context, token);
+			await innerHandler.HandleAsync(context, token).Await();
+			await next.Invoke(context, token).Await();
 		}
 	}
 }

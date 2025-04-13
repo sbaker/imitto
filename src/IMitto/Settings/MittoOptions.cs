@@ -29,5 +29,5 @@ public class MittoOptions
 
 	public int StoppingTimeoutInSeconds { get; set; } = 5;
 	
-	public bool EnableSocketPipelines { get; set; } = false;
+	public bool EnableSocketPipelines { get; set; } = true;
 }

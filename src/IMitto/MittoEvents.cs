@@ -44,7 +44,7 @@ public class MittoEvents(IOptions<MittoEventsOptions> options, ISubscriptionRepo
 
 	public async ValueTask DisposeAsync()
 	{
-		await DisposeAsyncCore(true);
+		await DisposeAsyncCore(true).Await();
 		GC.SuppressFinalize(this);
 	}
 
@@ -73,7 +73,7 @@ public class MittoEvents(IOptions<MittoEventsOptions> options, ISubscriptionRepo
 		ThrowIfDisposed();
 
 		var subscriberTask = factory.Invoke(this, eventId, token);
-		return SubscribeCore(await subscriberTask.ConfigureAwait(false));
+		return SubscribeCore(await subscriberTask.Await());
 	}
 
 	public virtual bool Unsubscribe(ISubscription subscription)

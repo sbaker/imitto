@@ -30,13 +30,13 @@ public class MittoEventListener : IMittoEventListener
 
 		while (!token.IsCancellationRequested)
 		{
-			await Task.Delay(_options.TaskDelayMilliseconds, token);
+			await Task.Delay(_options.TaskDelayMilliseconds, token).Await();
 
 			if (!context.Socket.DataAvailable) { continue; }
 
 			try
 			{
-				var message = await context.Socket.ReadAsync<EventNotificationRequest>(token);
+				var message = await context.Socket.ReadAsync<EventNotificationRequest>(token).Await();
 
 				if (message == null) { continue; }
 
@@ -44,11 +44,11 @@ public class MittoEventListener : IMittoEventListener
 
 				var writer = _channelWriter.GetWriter();
 
-				if (await writer.WaitToWriteAsync(token))
+				if (await writer.WaitToWriteAsync(token).Await())
 				{
 					var eventContext = new ServerEventNotificationsContext(context.ConnectionId, message.Body.Content!);
 
-					await writer.WriteAsync(eventContext, token);
+					await writer.WriteAsync(eventContext, token).Await();
 				}
 			}
 			catch (Exception e)

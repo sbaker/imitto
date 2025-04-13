@@ -29,7 +29,7 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 
 		var tcpClient = new TcpClient();
 		var connectionOptions = Options.Connection;
-		await tcpClient.ConnectAsync(connectionOptions.Host.EndPoint, token);
+		await tcpClient.ConnectAsync(connectionOptions.Host.EndPoint, token).Await();
 
 		tcpClient.ReceiveTimeout = connectionOptions.ConnectionTimeout;
 		tcpClient.SendTimeout = connectionOptions.ConnectionTimeout;

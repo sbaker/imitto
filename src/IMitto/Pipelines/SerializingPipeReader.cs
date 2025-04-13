@@ -52,7 +52,7 @@ public class SerializingPipeReader : PipeReader
 
 		while (true)
 		{
-			ReadResult result = await _innerReader.ReadAsync(token);
+			ReadResult result = await _innerReader.ReadAsync(token).Await();
 
 			SequencePosition? position = null;
 			var buffer = result.Buffer;
