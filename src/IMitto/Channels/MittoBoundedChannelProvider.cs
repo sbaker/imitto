@@ -5,7 +5,6 @@ namespace IMitto.Channels;
 
 public sealed class MittoBoundedChannelProvider<T> : IMittoChannelProvider<T>
 {
-	private readonly Guid _id = Guid.NewGuid();
 	private readonly Channel<T> _channel;
 
 	public MittoBoundedChannelProvider(IOptions<MittoBoundedChannelOptions> options)
