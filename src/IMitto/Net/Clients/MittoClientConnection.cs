@@ -20,7 +20,21 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 
 	protected MittoSocket? Socket => _mittoSocket;
 
-	public async Task ConnectAsync(CancellationToken token = default)
+	public override Task CloseAsync(CancellationToken token = default)
+	{
+		if (_mittoSocket is null || !_mittoSocket.IsConnected || _mittoSocket.Disposed)
+		{
+			return Task.CompletedTask;
+		}
+
+		_mittoSocket.Dispose();
+
+		_mittoSocket = null;
+
+		return Task.CompletedTask;
+	}
+
+	public override async Task ConnectAsync(CancellationToken token = default)
 	{
 		if (_mittoSocket?.IsConnected ?? false == true)
 		{

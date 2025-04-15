@@ -80,7 +80,7 @@ public class MittoClientEventManager : MittoLocalEvents, IMittoClientEventManage
 		var consumerTopics = _options.TypeMappings.Where(x => x.Value.IsConsumer).Select(x => x.Key).ToArray();
 		var producerTopics = _options.TypeMappings.Where(x => x.Value.IsProducer).Select(x => x.Key).ToArray();
 
-		await connection!.SendRequestAsync(new MittoTopicsRequest
+		await connection.SendRequestAsync(new MittoTopicsRequest
 		{
 			Header = new()
 			{

@@ -22,6 +22,11 @@ public class SingleMittoServerConnection : MittoServerConnection
 		return new MittoPipelineSocket(tcpClient, Options);
 	}
 
+	public override Task CloseAsync(CancellationToken token = default)
+	{
+		return Task.CompletedTask.ContinueWith(t => _listener.Stop(), token);
+	}
+
 	public override Task ConnectAsync(CancellationToken token = default)
 	{
 		return Task.Run(_listener.Start, token);

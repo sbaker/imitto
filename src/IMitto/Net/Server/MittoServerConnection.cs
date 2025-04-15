@@ -10,6 +10,4 @@ public abstract class MittoServerConnection : MittoConnection, IMittoServerConne
 	protected MittoServerOptions Options { get; set; }
 
 	public abstract Task<MittoSocket> AcceptAsync(CancellationToken token = default);
-
-	public abstract Task ConnectAsync(CancellationToken token = default);
 }
