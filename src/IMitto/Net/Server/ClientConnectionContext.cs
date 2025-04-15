@@ -1,7 +1,7 @@
 ﻿
 using IMitto.Local;
-using IMitto.Net.Models;
-using IMitto.Net.Requests;
+using IMitto.Protocols.Models;
+using IMitto.Protocols.Requests;
 
 namespace IMitto.Net.Server;
 

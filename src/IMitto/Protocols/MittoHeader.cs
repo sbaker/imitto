@@ -1,4 +1,6 @@
-﻿namespace IMitto.Net;
+﻿using IMitto.Net;
+
+namespace IMitto.Protocols;
 
 public class MittoHeader : Dictionary<string, object?>
 {

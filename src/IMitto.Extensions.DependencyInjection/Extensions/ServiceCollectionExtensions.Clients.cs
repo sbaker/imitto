@@ -1,14 +1,10 @@
 ﻿using IMitto.Consumers;
 using IMitto.Extensions.DependencyInjection;
 using IMitto.Net.Clients;
-using IMitto.Net.Models;
 using IMitto.Producers;
+using IMitto.Protocols.Models;
 using IMitto.Settings;
-using Microsoft.Extensions.DependencyInjection;
-using System.Data;
-using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Schema;
 using System.Text.Json.Serialization.Metadata;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure

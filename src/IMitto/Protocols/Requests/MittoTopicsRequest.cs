@@ -1,5 +1,5 @@
-﻿using IMitto.Net.Models;
-namespace IMitto.Net.Requests;
+﻿using IMitto.Protocols.Models;
+namespace IMitto.Protocols.Requests;
 
 public class MittoTopicsRequest : MittoRequest<MittoTopicMessageBody>
 {

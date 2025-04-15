@@ -1,6 +1,6 @@
 ﻿using IMitto.Producers;
 
-namespace IMitto.Net;
+namespace IMitto.Protocols;
 
 public record PackagedGoods<TGoods> : PackagedGoods
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using IMitto.Channels;
-using IMitto.Net.Models;
+using IMitto.Protocols.Models;
 
 namespace IMitto.Net.Clients;
 

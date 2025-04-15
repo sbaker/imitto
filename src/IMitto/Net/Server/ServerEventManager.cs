@@ -4,9 +4,6 @@ using IMitto.Channels;
 using IMitto.Local;
 using Microsoft.Extensions.Options;
 using IMitto.Settings;
-using IMitto.Net.Models;
-using IMitto.Net.Clients;
-using System.Data.Common;
 
 namespace IMitto.Net.Server;
 

@@ -1,6 +1,6 @@
-﻿using IMitto.Net.Models;
+﻿using IMitto.Protocols.Models;
 
-namespace IMitto.Net.Requests;
+namespace IMitto.Protocols.Requests;
 
 public interface IMittoRequest : IMittoMessage
 {

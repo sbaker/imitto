@@ -8,10 +8,10 @@ for a variety of applications.
 
 | 0x0001 0x01 | 0x00000001 Headers (k:v\nk1:v1\n) |--0x00000001 Contents (Blob | Raw bytes)|
 
-| Action Descriptor | Action Headers | Package Contents |
+| Descriptor | Headers | Package |
 |:-:|:-:|:-:|
 | Action &#124; Modifier | HeadersLength &#124; Headers | ContentLength &#124; Content |
-| 16 bits &#124; 4 bits | 32 bit Length &#124; k:v\n | 32 bits &#124; Length |
+| 16 bits &#124; 4 bits &#124; 4 bits (reserved, unused) | 32 bit Length &#124; k:v\n | 32 bits &#124; Length |
 
 ---
 
@@ -37,6 +37,9 @@ for a variety of applications.
     - nack=8
     - error=16
     - next=32
+
+- 1 byte | 4 bits
+  - Reserded
 
 ---
 

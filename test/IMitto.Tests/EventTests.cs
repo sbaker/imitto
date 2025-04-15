@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using IMitto.Protocols;
+using System.Buffers;
 using System.Text;
 
 namespace IMitto.Tests;
@@ -109,28 +110,6 @@ public class EventTests
 
 		Assert.Equal(bodyLength, readBodyLength);
 		Assert.Equal(body, Encoding.UTF8.GetString(readBodyBuffer, 0, readBodyLength));
-	}
-
-	private enum MittoAction : short
-	{
-		None = 0,
-		Auth = 1,
-		Produce = 2,
-		Connect = 4,
-		Disconnect = 8,
-		Consume = 16,
-		Stream = 32,
-		Session = 64,
-	}
-
-	private enum MittoActionModifier : byte
-	{
-		None = 0,
-		End = 1,
-		Start = 2,
-		Ack = 4,
-		Nack = 8,
-		Error = 16,
 	}
 
 	private static class Data

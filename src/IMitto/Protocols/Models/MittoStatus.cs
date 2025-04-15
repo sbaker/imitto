@@ -1,8 +1,6 @@
-﻿
+﻿using System.Net;
 
-using System.Net;
-
-namespace IMitto.Net.Models;
+namespace IMitto.Protocols.Models;
 
 public class MittoStatus
 {

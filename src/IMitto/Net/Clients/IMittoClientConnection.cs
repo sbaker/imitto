@@ -1,5 +1,5 @@
-﻿using IMitto.Net.Requests;
-using IMitto.Net.Responses;
+﻿using IMitto.Protocols.Requests;
+using IMitto.Protocols.Responses;
 
 namespace IMitto.Net.Clients;
 

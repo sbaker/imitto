@@ -1,8 +1,8 @@
-﻿using IMitto.Net.Models;
+﻿using IMitto.Protocols.Models;
 using IMitto.Settings;
 using System.Text.Json;
 
-namespace IMitto.Net;
+namespace IMitto.Protocols;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 public abstract class MittoMessage(MittoHeader header) : IMittoMessage
@@ -55,7 +55,7 @@ public class MittoMessage<TBody> : MittoMessage, IMittoMessage<TBody> where TBod
 			return body;
 		}
 
-		return JsonSerializer.Deserialize<TBody1>(Body.BodyElement, options.Serializer)!;
+		return Body.BodyElement.Deserialize<TBody1>(options.Serializer)!;
 	}
 
 	public override bool HasBody()

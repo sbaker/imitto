@@ -1,4 +1,4 @@
-﻿namespace IMitto.Net.Models;
+﻿namespace IMitto.Protocols.Models;
 
 public class MittoAuthenticationMessageBody : MittoMessageBody
 {

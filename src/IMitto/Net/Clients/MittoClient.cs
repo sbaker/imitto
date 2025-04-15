@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using IMitto.Net.Models;
 using IMitto.Hosting;
 using System.Net.Sockets;
-using IMitto.Net.Requests;
-using IMitto.Net.Responses;
 using IMitto.Middlware;
+using IMitto.Protocols;
+using IMitto.Protocols.Responses;
+using IMitto.Protocols.Models;
+using IMitto.Protocols.Requests;
 
 namespace IMitto.Net.Clients;
 
@@ -136,7 +137,8 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 					ConnectionId = Connection.ConnectionId,
 				};
 
-				await Connection.SendRequestAsync(new AuthenticationRequest(authBody, authHeader), ct).Await();
+				await Connection.SendRequestAsync(new AuthenticationRequest(authBody,
+																authHeader), ct).Await();
 				var response = await Connection.ReadResponseAsync<MittoStatusResponse>(ct).Await();
 
 				Connection.ConnectionId = response!.Header.ConnectionId;

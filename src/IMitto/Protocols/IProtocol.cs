@@ -1,7 +1,4 @@
-﻿using IMitto.Net;
-using IMitto.Net.Requests;
-
-namespace IMitto.Net.Protocols
+﻿namespace IMitto.Protocols
 {
 	public interface IProtocolTransport
 	{
@@ -9,5 +6,4 @@ namespace IMitto.Net.Protocols
 
 		Task SendAsync<TMittoMessage>(TMittoMessage message, CancellationToken token) where TMittoMessage : IMittoMessage;
 	}
-
 }

@@ -1,7 +1,7 @@
 ﻿using System.Net.Sockets;
-using IMitto.Net.Requests;
-using IMitto.Net.Responses;
 using IMitto.Pipelines;
+using IMitto.Protocols.Requests;
+using IMitto.Protocols.Responses;
 
 namespace IMitto.Net.Clients;
 

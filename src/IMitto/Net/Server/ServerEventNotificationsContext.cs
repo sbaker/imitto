@@ -1,4 +1,4 @@
-﻿using IMitto.Net.Models;
+﻿using IMitto.Protocols.Models;
 
 namespace IMitto.Net.Server;
 

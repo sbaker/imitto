@@ -1,6 +1,7 @@
-﻿using IMitto.Net.Models;
+﻿using IMitto.Net;
+using IMitto.Protocols.Models;
 
-namespace IMitto.Net.Requests;
+namespace IMitto.Protocols.Requests;
 
 public class EventNotificationRequest : MittoRequest<EventNotificationsBody>
 {

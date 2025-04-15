@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace IMitto.Net.Models;
+namespace IMitto.Protocols.Models;
 
 public class MittoMessageBody
 {

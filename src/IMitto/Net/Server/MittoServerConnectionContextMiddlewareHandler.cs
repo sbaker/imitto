@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using IMitto.Middlware;
-using IMitto.Net.Requests;
-using IMitto.Net.Models;
 using IMitto.Settings;
+using IMitto.Protocols.Models;
+using IMitto.Protocols.Requests;
 
 namespace IMitto.Net.Server;
 

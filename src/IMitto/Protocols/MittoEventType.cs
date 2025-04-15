@@ -1,4 +1,4 @@
-﻿namespace IMitto.Net;
+﻿namespace IMitto.Protocols;
 
 public enum MittoEventType
 {
