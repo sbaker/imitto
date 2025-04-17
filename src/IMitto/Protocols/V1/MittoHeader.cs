@@ -16,24 +16,22 @@ public sealed class MittoHeader : MittoByteContent<byte>, IMittoHeader
 
 	public MittoHeader(string key, string value) : base()
 	{
-		_key = key;
-		_value = value;
+		Key = key;
+		Value = value;
 	}
 
-	public MittoHeader(string key, MittoHeaderKey keyId, ReadOnlySequence<byte> value) : base(value)
+	public MittoHeader(string key, ReadOnlySequence<byte> value) : base(value)
 	{
-		_key = key;
-		_keyId = keyId;
+		Key = key;
 	}
 
 	public MittoHeader(MittoHeaderKey keyId, ReadOnlySequence<byte> key, ReadOnlySequence<byte> value) : base(value)
 	{
+		_keyId = keyId;
 		_keyContent = key;
+
+		IsSerialized = true;
 	}
-
-	public byte KeyLength { get; }
-
-	public byte ValueLength => (byte)Content.Length;
 
 	public string Value
 	{

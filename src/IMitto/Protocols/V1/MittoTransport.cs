@@ -2,12 +2,13 @@
 using IMitto.Pipelines;
 using System;
 using System.Buffers;
+using System.IO.Pipelines;
 using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace IMitto.Protocols.V1;
 
-internal class MittoProtocolTransport : MittoProtcolTransportBase
+internal class MittoTransport : MittoTransportBase
 {
 	public override MittoProtocolVersion ProtocolVersion => MittoProtocolVersion.V1;
 
@@ -22,19 +23,28 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 
 	public override Task<IMittoPackage> ReceiveAsync(ConnectionContext context, CancellationToken token)
 	{
-		throw new NotImplementedException();
+		var reader = context.Socket.GetReader();
+		return ReadPackageAsync(reader, token);
 	}
 
 	public override Task SendAsync(ConnectionContext context, IMittoPackage package, CancellationToken token)
 	{
-		throw new NotImplementedException();
+		var writer = context.Socket.GetWriter();
+		return WritePackageAsync(writer, package, token);
 	}
 
-	private async static Task<IMittoCommand> ReadCommandAsync(MittoPipeReader reader, CancellationToken token)
+	public override async Task WritePackageAsync(MittoPipeWriter writer, IMittoPackage package, CancellationToken token = default)
+	{
+		await WriteCommandAsync(writer, package.Command, token);
+		await WriteHeadersAsync(writer, package.Headers, token);
+		await WriteContentAsync(writer, package.Content, token);
+	}
+
+	private static async Task<IMittoCommand> ReadCommandAsync(MittoPipeReader reader, CancellationToken token)
 	{
 		IMittoCommand? command = null;
 
-		while (true)
+		while (!token.IsCancellationRequested)
 		{
 			var result = await reader.ReadAsync(token);
 
@@ -65,6 +75,7 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 			catch (Exception e)
 			{
 				reader.AdvanceTo(buffer.Start, buffer.End);
+				break;
 			}
 			finally
 			{
@@ -75,11 +86,11 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 		return command;
 	}
 
-	private async static Task<IMittoHeaders> ReadHeadersAsync(MittoPipeReader reader, CancellationToken token = default)
+	private static async Task<IMittoHeaders> ReadHeadersAsync(MittoPipeReader reader, CancellationToken token = default)
 	{
 		var headers = new MittoHeaders();
 
-		while (true)
+		while (!token.IsCancellationRequested)
 		{
 			var result = await reader.ReadAsync(token);
 
@@ -125,7 +136,7 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 
 					if (!sequenceReader.TryRead(out byte valueLength) || !sequenceReader.TryReadExact(valueLength, out var valueSpan)) { break; }
 
-					var header = new MittoHeader(key, (MittoHeaderKey)keyId, valueSpan);
+					var header = new MittoHeader(key, valueSpan);
 					
 					currentHeaderIndex++;
 
@@ -137,6 +148,7 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 			catch (Exception e)
 			{
 				reader.AdvanceTo(buffer.Start, buffer.End);
+				break;
 			}
 			finally
 			{
@@ -147,11 +159,11 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 		return headers;
 	}
 
-	private async static Task<MittoContent> ReadContentAsync(MittoPipeReader reader, CancellationToken token)
+	private static async Task<MittoContent> ReadContentAsync(MittoPipeReader reader, CancellationToken token)
 	{
 		MittoContent? content = null;
 
-		while (true)
+		while (!token.IsCancellationRequested)
 		{
 			var result = await reader.ReadAsync(token);
 
@@ -177,10 +189,10 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 			{
 				//_logger.LogError(e, "Error reading content");
 				reader.AdvanceTo(buffer.Start, buffer.End);
+				break;
 			}
 			finally
 			{
-
 				reader.AdvanceTo(sequenceReader.Position, buffer.End);
 			}
 		}
@@ -188,30 +200,120 @@ internal class MittoProtocolTransport : MittoProtcolTransportBase
 		return content;
 	}
 
-	public override async Task WritePackageAsync(MittoPipeWriter writer, IMittoPackage package, CancellationToken token = default)
+	private static async Task WriteCommandAsync(MittoPipeWriter writer, IMittoCommand command, CancellationToken token = default)
 	{
 		await Task.Delay(1, token);
 
-		//var buffer = writer.GetMemory();
-		//var memoryWriter = new MemoryWriter<byte>(buffer);
+		var buffer = writer.GetMemory(4096);
+		var memoryWriter = new MemoryWriter<byte>(buffer);
 
-		//foreach (var kvp in headers)
-		//{
-		//	if (!kvp.HasStringKey)
-		//	{
-		//		memoryWriter.Write((byte)kvp.KeyId);
-		//	}
-		//	else
-		//	{
-		//		memoryWriter.Write((byte)MittoHeaderKey.Custom);
-		//		var keyBytes = Encoding.UTF8.GetBytes(kvp.Key);
-		//		memoryWriter.Write((byte)keyBytes.Length);
-		//		memoryWriter.WriteBytes(keyBytes);
-		//	}
-		//}
+		memoryWriter.Write((byte)command.Version);
+		memoryWriter.Write(BitConverter.GetBytes((short)command.Action));
+		memoryWriter.Write((byte)command.Modifier);
 
-		//writer.Advance(memoryWriter.WrittenLength);
+		//writer.WriteAsync.Write(memoryWriter.WrittenSpan, token).Await();
 
-		//var flushResult = await writer.FlushAsync(token).Await();
+		writer.Advance(memoryWriter.WrittenLength);
+
+		var flushResult = await writer.FlushAsync(token).Await();
+
+		if (flushResult.IsCanceled)
+		{
+			throw new OperationCanceledException("Write command operation was canceled.");
+		}
+
+		if (flushResult.IsCompleted)
+		{
+			throw new InvalidOperationException("Write command operation was completed.");
+		}
+	}
+
+	private static async Task WriteHeadersAsync(MittoPipeWriter writer, IMittoHeaders headers, CancellationToken token = default)
+	{
+		await Task.Delay(1, token);
+
+		var buffer = writer.GetMemory();
+		var memoryWriter = new MemoryWriter<byte>(buffer);
+
+
+		memoryWriter.Write((byte)headers.Count);
+
+		foreach (var kvp in headers)
+		{
+			if (!kvp.HasStringKey)
+			{
+				memoryWriter.Write((byte)kvp.KeyId);
+			}
+			else
+			{
+				memoryWriter.Write((byte)MittoHeaderKey.Custom);
+				var keyBytes = Encoding.UTF8.GetBytes(kvp.Key);
+				memoryWriter.Write((byte)keyBytes.Length);
+				memoryWriter.Write(keyBytes);
+			}
+
+			if (kvp.IsSerialized && kvp is IMittoByteContent<byte> content)
+			{
+				memoryWriter.Write(content.Content);
+			}
+			else
+			{
+				//var valueBytes = Encoding.UTF8.GetByteCount(kvp.Value);
+				//memoryWriter.Write
+				//Encoding.UTF8.GetChars(kvp.Value.AsSpan(), writer);
+				
+				var valueBytes = Encoding.UTF8.GetBytes(kvp.Value);
+				memoryWriter.Write((byte)valueBytes.Length);
+				memoryWriter.Write(valueBytes);
+			}
+		}
+
+		writer.Advance(memoryWriter.WrittenLength);
+
+		var flushResult = await writer.FlushAsync(token).Await();
+
+		if (flushResult.IsCanceled)
+		{
+			throw new OperationCanceledException("Write command operation was canceled.");
+		}
+
+		if (flushResult.IsCompleted)
+		{
+			throw new InvalidOperationException("Write command operation was completed.");
+		}
+	}
+
+	private static async Task WriteContentAsync(MittoPipeWriter writer, IMittoContent content, CancellationToken token = default)
+	{
+		await Task.Delay(1, token);
+
+		var buffer = writer.GetMemory();
+		var memoryWriter = new MemoryWriter<byte>(buffer);
+
+		if (content.IsSerialized && content is IMittoByteContent<int> byteContent)
+		{
+			memoryWriter.Write(BitConverter.GetBytes((int)byteContent.Content.Length));
+			memoryWriter.Write(byteContent.Content);
+		}
+		else
+		{
+			var contentBytes = Encoding.UTF8.GetBytes(content.Package!);
+			memoryWriter.Write(BitConverter.GetBytes(contentBytes.Length));
+			memoryWriter.Write(contentBytes);
+		}
+
+		writer.Advance(memoryWriter.WrittenLength);
+
+		var flushResult = await writer.FlushAsync(token).Await();
+
+		if (flushResult.IsCanceled)
+		{
+			throw new OperationCanceledException("Write command operation was canceled.");
+		}
+
+		if (flushResult.IsCompleted)
+		{
+			throw new InvalidOperationException("Write command operation was completed.");
+		}
 	}
 }

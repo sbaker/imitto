@@ -4,9 +4,9 @@ namespace IMitto.Protocols.V1;
 
 public sealed class MittoContent : MittoByteContent<int>, IMittoContent
 {
-	private string _package;
+	private string? _package;
 
-	public MittoContent(string package) : base()
+	public MittoContent(string? package = null) : base()
 	{
 		_package = package;
 		IsSerialized = false;

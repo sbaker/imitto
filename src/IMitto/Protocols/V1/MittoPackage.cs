@@ -5,11 +5,11 @@ public sealed class MittoPackage : IMittoPackage
 	public MittoPackage(IMittoCommand command, IMittoHeaders header, IMittoContent content)
 	{
 		Command = command;
-		Header = header;
+		Headers = header;
 		Content = content;
 	}
 
-	public IMittoHeaders Header { get; }
+	public IMittoHeaders Headers { get; }
 
 	public IMittoCommand Command { get; }
 

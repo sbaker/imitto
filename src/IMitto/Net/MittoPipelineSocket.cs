@@ -24,6 +24,12 @@ public class MittoPipelineSocket : MittoSocket
 		return _pipeline.Reader;
 	}
 
+	public MittoPipeWriter GetWriter()
+	{
+		return _pipeline.Writer;
+	}
+
+
 	public override Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default) where TMessage : default
 	{
 		if (Options.EnableSocketPipelines)

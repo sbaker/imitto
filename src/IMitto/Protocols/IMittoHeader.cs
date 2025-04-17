@@ -4,9 +4,9 @@ namespace IMitto.Protocols;
 
 public interface IMittoHeader : IMittoByteContent<byte>
 {
-	byte KeyLength { get; }
+	//byte KeyLength { get; }
 
-	byte ValueLength { get; }
+	//byte ValueLength { get; }
 
 	MittoHeaderKey KeyId { get; }
 

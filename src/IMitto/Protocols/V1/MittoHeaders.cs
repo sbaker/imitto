@@ -10,6 +10,14 @@ public class MittoHeaders : Collection<IMittoHeader>, IMittoHeaders
 	{
 	}
 
+	public MittoHeaders(IList<IMittoHeader> headers) : base(headers)
+	{
+	}
+
+	public MittoHeaders(IEnumerable<IMittoHeader> headers) : base(headers.ToList())
+	{
+	}
+
 	public IMittoHeader this[byte key] => this.First(h => h.HasStringKey && h.KeyId == (MittoHeaderKey)key);
 
 	public IMittoHeader this[string key] => this.First(h => h.HasStringKey && h.Key == key);

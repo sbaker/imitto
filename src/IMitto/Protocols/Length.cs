@@ -16,7 +16,7 @@ public readonly struct Length<T>(Func<T> provider) where T : struct, INumber<T>
 
 	public static Length<T> Zero { get; } = new Length<T>(T.Zero);
 
-	public T Value { get; }
+	public T Value => _provider();
 
 	public static implicit operator Length<T>(T value)
 	{

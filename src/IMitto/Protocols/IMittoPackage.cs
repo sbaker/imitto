@@ -4,7 +4,7 @@ public interface IMittoPackage
 {
 	IMittoCommand Command { get; }
 
-	IMittoHeaders Header { get; }
+	IMittoHeaders Headers { get; }
 
 	IMittoContent Content { get; }
 }

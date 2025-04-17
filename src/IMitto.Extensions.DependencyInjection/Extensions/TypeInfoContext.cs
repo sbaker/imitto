@@ -1,6 +1,5 @@
-﻿namespace Microsoft.Extensions.DependencyInjection
+﻿namespace Microsoft.Extensions.DependencyInjection;
+
+public class TypeInfoContext
 {
-	public class TypeInfoContext
-	{
-	}
 }
