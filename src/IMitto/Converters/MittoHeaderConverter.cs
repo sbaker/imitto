@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.Json;
-using IMitto.Net;
+using IMitto.Protocols;
+using IMitto.Protocols.Models;
 
 namespace IMitto.Converters;
 

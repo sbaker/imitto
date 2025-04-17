@@ -1,6 +1,9 @@
-﻿using System.Net.Sockets;
+﻿using System.Buffers;
+using System.IO.Pipelines;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using IMitto.Protocols;
 using IMitto.Settings;
 
 namespace IMitto.Net;
@@ -20,10 +23,10 @@ public class MittoSocket : Disposables
 		var stream = tcpClient.GetStream();
 
 		_tcpClient = Add(tcpClient, tcpClient.Close);
-		_networkStream = Add(stream);
+		_networkStream = Add(stream, () => _networkStream?.Close());
 
-		_reader = Add(new StreamReader(stream));
-		_writer = Add(new StreamWriter(stream));
+		_reader = Add(new StreamReader(stream), () => _reader?.Close());
+		_writer = Add(new StreamWriter(stream), () => _writer?.Close());
 
 		_encoding = options.Encoding;
 		_options = options;

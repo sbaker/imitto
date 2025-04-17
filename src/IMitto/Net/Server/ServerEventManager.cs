@@ -4,9 +4,6 @@ using IMitto.Channels;
 using IMitto.Local;
 using Microsoft.Extensions.Options;
 using IMitto.Settings;
-using IMitto.Net.Models;
-using IMitto.Net.Clients;
-using System.Data.Common;
 
 namespace IMitto.Net.Server;
 
@@ -63,7 +60,7 @@ public sealed class ServerEventManager : MittoLocalEvents, IServerEventManager
 
 							var connection = await channelReader.ReadAsync(token).Await();
 
-							var context = new ClientConnectionContext(connection, token);
+							var context = new ClientConnectionContext(connection);
 							context.SubscribeToEvents();
 							_connections.Add(context);
 						}

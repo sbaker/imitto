@@ -1,31 +1,28 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using IMitto.Net.Models;
 using IMitto.Hosting;
 using System.Net.Sockets;
-using IMitto.Net.Requests;
-using IMitto.Net.Responses;
 using IMitto.Middlware;
+using IMitto.Protocols;
+using IMitto.Protocols.Responses;
+using IMitto.Protocols.Models;
+using IMitto.Protocols.Requests;
 
 namespace IMitto.Net.Clients;
 
 public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 {
 	private readonly MittoClientOptions _options;
-	private readonly IMittoEventDispatcher _eventDispatcher;
 	private readonly ILogger<MittoClient> _logger;
 	private readonly IMittoClientEventManager _eventManager;
 	private IMittoClientConnection? _connection;
-	private Task? _clientEventLoopTask;
 
 	public MittoClient(
 		IOptions<MittoClientOptions> options,
 		ILogger<MittoClient> logger,
-		IMittoEventDispatcher eventDispatcher,
 		IMittoClientEventManager eventManager) : base(logger, options)
 	{
 		_options = options.Value;
-		_eventDispatcher = eventDispatcher;
 		_eventManager = eventManager;
 		_logger = logger;
 	}
@@ -34,22 +31,35 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 
 	protected override Task RunInternalAsync(CancellationToken token)
 	{
-		var middleware = GetMiddleware();
-
 		return Task.Run(async () =>
 		{
 			var retries = 0;
+			var middleware = GetMiddleware();
 
 			while (_options.MaxConnectionRetries > retries++)
 			{
 				try
 				{
+					if (!Connection.IsConnected())
+					{
+						await Connection.ConnectAsync().Await();
+					}
+
 					var context = new MiddlewareContext();
 					await middleware.HandleAsync(context, token).Await();
 				}
 				catch (TaskCanceledException tce)
 				{
-					_logger.LogWarning(tce, "Task canceled");
+					if (tce.CancellationToken != TokenSource.Token)
+					{
+						_logger.LogInformation(tce, "Task canceled");
+					}
+
+					if (Connection.IsConnected())
+					{
+						await Connection.CloseAsync().Await();
+					}
+					
 					break;
 				}
 				catch (Exception ex)
@@ -60,34 +70,6 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 				Connection.Dispose();
 			}
 		}, token);
-	}
-
-	public async Task<MittoStatus> AuthenticateAsync(CancellationToken token = default)
-	{
-		if (!Connection.IsConnected())
-		{
-			throw new InvalidOperationException("Socket is not connected or not initialized.");
-		}
-
-		var authBody = new MittoAuthenticationMessageBody
-		{
-			Key = Options.AuthenticationKey,
-			Secret = Options.AuthenticationSecret
-		};
-
-		var authHeader = new MittoHeader
-		{
-			Path = MittoPaths.Auth,
-			Action = MittoEventType.Authentication,
-			Version = MittoConstants.Version,
-			ConnectionId = Connection.ConnectionId,
-		};
-
-		await Connection!.SendRequestAsync(new AuthenticationRequest(authBody, authHeader), token).Await();
-		var response = await Connection.ReadResponseAsync<MittoStatusResponse>(token).Await();
-
-		Connection.ConnectionId = response!.Header.ConnectionId;
-		return response.Body.Status;
 	}
 
 	private Task StartEventLoopsAsync(CancellationToken token)
@@ -138,36 +120,42 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 	private IMiddlewareHandler GetMiddleware()
 	{
 		return new MiddlewareBuilder()
-			//.Add(async (next, context, ct) => {
-			//	_logger.LogTrace("Middleware: start {connectionId}", context.ConnectionId);
-
-			//	if (!Connection.IsConnected())
-			//	{
-			//		await Connection.ConnectAsync(ct).Await();
-			//	}
-
-			//	await next(context, ct).Await();
-
-			//	_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
-			//})
 			.Add(async (next, context, ct) => {
-				_logger.LogTrace("Middleware: start {connectionId}", context.ConnectionId);
+				_logger.LogTrace("Auth Middleware: start {connectionId}", context.ConnectionId);
 
-				var response = await AuthenticateAsync(ct).Await();
+				var authBody = new MittoAuthenticationMessageBody
+				{
+					Key = Options.AuthenticationKey,
+					Secret = Options.AuthenticationSecret
+				};
 
-				if (response.Success)
+				var authHeader = new MittoHeader
+				{
+					Path = MittoPaths.Auth,
+					Action = MittoEventType.Authentication,
+					Version = MittoConstants.Version,
+					ConnectionId = Connection.ConnectionId,
+				};
+
+				await Connection.SendRequestAsync(new AuthenticationRequest(authBody,
+																authHeader), ct).Await();
+				var response = await Connection.ReadResponseAsync<MittoStatusResponse>(ct).Await();
+
+				Connection.ConnectionId = response!.Header.ConnectionId;
+
+				if (response.Body.Status.Success)
 				{
 					await next(context, ct).Await();
 				}
 
-				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
+				_logger.LogTrace("Auth Middleware: end {connectionId}", context.ConnectionId);
 			})
 			.Add(async (next, context, ct) => {
-				_logger.LogTrace("Middleware: start {connectionId}", context.ConnectionId);
+				_logger.LogTrace("EventLoop Middleware: start {connectionId}", context.ConnectionId);
 
 				await StartEventLoopsAsync(ct).Await();
 
-				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
+				_logger.LogTrace("EventLoop Middleware: end {connectionId}", context.ConnectionId);
 			})
 			.Build();
 	}

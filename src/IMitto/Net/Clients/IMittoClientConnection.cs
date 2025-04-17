@@ -1,5 +1,5 @@
-﻿using IMitto.Net.Requests;
-using IMitto.Net.Responses;
+﻿using IMitto.Protocols.Requests;
+using IMitto.Protocols.Responses;
 
 namespace IMitto.Net.Clients;
 
@@ -8,8 +8,6 @@ public interface IMittoClientConnection : IMittoConnection
 	string? ConnectionId { get; set; }
 
 	bool IsDataAvailable();
-
-	Task ConnectAsync(CancellationToken token = default);
 
 	Task SendRequestAsync<TRequest>(TRequest request, CancellationToken token) where TRequest : IMittoRequest;
 

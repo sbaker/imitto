@@ -1,8 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 
 var builder = Host.CreateApplicationBuilder();
@@ -18,6 +15,7 @@ builder.Logging.AddSimpleConsole(logging => {
 	logging.TimestampFormat = "yyyy-MM-ddThh:mm:ss.ffffff";
 	logging.UseUtcTimestamp = true;
 });
+
 
 builder.Services.AddIMittoServer(options => {
 	options.Name = "imitto-test-server";

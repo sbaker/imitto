@@ -1,10 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using IMitto.Channels;
-using IMitto.Net.Models;
-using IMitto.Net.Requests;
 using IMitto.Settings;
 using IMitto.Net.Server;
+using IMitto.Protocols.Requests;
 
 namespace IMitto.Net;
 

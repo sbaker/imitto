@@ -4,34 +4,34 @@ public class Disposables : Disposable
 {
 	private readonly Queue<IDisposable> _disposables = [];
 
-	public TDisposable Add<TDisposable>(TDisposable disposable) where TDisposable : IDisposable
+	protected TDisposable Add<TDisposable>(TDisposable disposable) where TDisposable : IDisposable
 	{
 		_disposables.Enqueue(disposable);
 
 		return disposable;
 	}
 
-	public TDisposable Add<TDisposable>(TDisposable disposable, Action disposing) where TDisposable : IDisposable
+	protected TDisposable Add<TDisposable>(TDisposable disposable, Action disposing) where TDisposable : IDisposable
 	{
 		_disposables.Enqueue(new Disposer(disposable, disposing));
 
 		return disposable;
 	}
 
-	public TDisposable Add<TDisposable>(TDisposable disposable, Action<TDisposable> disposing) where TDisposable : IDisposable
+	protected TDisposable Add<TDisposable>(TDisposable disposable, Action<TDisposable> disposing) where TDisposable : IDisposable
 	{
 		_disposables.Enqueue(new Disposer<TDisposable>(disposable, disposing));
 
 		return disposable;
 	}
 
-	public void Add(IDisposable disposable, IDisposable disposable1)
+	protected void Add(IDisposable disposable, IDisposable disposable1)
 	{
 		_disposables.Enqueue(disposable);
 		_disposables.Enqueue(disposable1);
 	}
 
-	public void Add(params IReadOnlyList<IDisposable> disposables)
+	protected void Add(params IReadOnlyList<IDisposable> disposables)
 	{
 		foreach (var disposable in disposables)
 		{

@@ -3,4 +3,5 @@ using IMitto.Benchmarks;
 
 
 
-BenchmarkRunner.Run<MiddlewareExecutorBenchmarks>();
+//BenchmarkRunner.Run<MiddlewareExecutorBenchmarks>();
+BenchmarkRunner.Run<ProtocolTransportBenchmarks>();

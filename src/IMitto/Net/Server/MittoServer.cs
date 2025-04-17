@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using IMitto.Hosting;
 using IMitto.Middlware;
+using IMitto.Protocols.Models;
 
 namespace IMitto.Net.Server;
 
@@ -27,9 +28,9 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 
 	public string Name => Options.Name;
 
-	public IMittoServerConnection? Connection { get; private set; }
+	private IMittoServerConnection? Connection { get; set; }
 
-	private static Task<MittoSocket> AcceptRequest(IMittoServerConnection connection, CancellationToken token)
+	private static Task<MittoPipelineSocket> AcceptSocket(IMittoServerConnection connection, CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
 		return connection.AcceptAsync(token);
@@ -63,14 +64,11 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 							await Connection.ConnectAsync(TokenSource.Token).Await();
 						}
 
-						var socket = await AcceptRequest(Connection, TokenSource.Token).Await();
+						var socket = await AcceptSocket(Connection, TokenSource.Token).Await();
 
 						_logger.LogTrace("Accepting Connections: end;");
 
-						var connectionContext = new ConnectionContext(
-							_eventManager,
-							socket,
-							TokenSource.Token);
+						var connectionContext = new ConnectionContext(_eventManager, socket);
 
 						await _eventManager.PublishServerEventAsync(ServerEventConstants.ConnectionReceivedEvent, connectionContext, connectionContext.ConnectionId, token).Await();
 

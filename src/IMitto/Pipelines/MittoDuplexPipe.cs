@@ -6,8 +6,8 @@ namespace IMitto.Pipelines;
 
 public class MittoDuplexPipe(Stream readerStream, Stream writerStream, MittoPipeOptions options) : IDuplexPipe, IMittoDuplexPipe
 {
-	private readonly SerializingPipeReader _reader = MittoPipe.CreateReader(readerStream, options.CreateReaderOptions());
-	private readonly SerializingPipeWriter _writer = MittoPipe.CreateWriter(writerStream, options.CreateWriterOptions());
+	private readonly MittoPipeReader _reader = MittoPipe.CreateReader(readerStream, options.CreateReaderOptions());
+	private readonly MittoPipeWriter _writer = MittoPipe.CreateWriter(writerStream, options.CreateWriterOptions());
 
 	public MittoDuplexPipe(Stream stream, MittoPipeOptions options) : this(stream, stream, options)
 	{
@@ -17,9 +17,9 @@ public class MittoDuplexPipe(Stream readerStream, Stream writerStream, MittoPipe
 
 	PipeWriter IDuplexPipe.Output => _writer;
 
-	public SerializingPipeReader Reader => _reader;
+	public MittoPipeReader Reader => _reader;
 
-	public SerializingPipeWriter Writer => _writer;
+	public MittoPipeWriter Writer => _writer;
 }
 
 public readonly struct ReadResult<T>(ReadResult result, T value)

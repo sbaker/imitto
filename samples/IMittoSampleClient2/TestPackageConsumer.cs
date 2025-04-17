@@ -1,6 +1,5 @@
 ﻿using IMitto.Consumers;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics.Metrics;
 
 namespace IMittoSampleClient2;
 
