@@ -1,8 +1,12 @@
-﻿using IMitto.Net;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using IMitto.Settings;
+using IMitto.Protocols;
+using System.IO.Pipelines;
+using System.Text;
+using IMitto.Pipelines;
+using System.Buffers;
 
-namespace IMitto.Pipelines;
+namespace IMitto.Net;
 
 public class MittoPipelineSocket : MittoSocket
 {
@@ -13,6 +17,11 @@ public class MittoPipelineSocket : MittoSocket
 	{
 		_stream = Add(tcpClient.GetStream(), s => s.Close());
 		_pipeline = new MittoDuplexPipe(_stream, options.Pipeline);
+	}
+
+	public MittoPipeReader GetReader()
+	{
+		return _pipeline.Reader;
 	}
 
 	public override Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default) where TMessage : default

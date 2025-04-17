@@ -12,7 +12,7 @@ public class SingleMittoServerConnection : MittoServerConnection
 		_listener = new(options.Connection.Host.EndPoint);
 	}
 
-	public override async Task<MittoSocket> AcceptAsync(CancellationToken token = default)
+	public override async Task<MittoPipelineSocket> AcceptAsync(CancellationToken token = default)
 	{
 		var connectionOptions = Options.Connection;
 		var tcpClient = await _listener.AcceptTcpClientAsync(token).Await();

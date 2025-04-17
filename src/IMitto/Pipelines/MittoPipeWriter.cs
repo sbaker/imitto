@@ -3,17 +3,17 @@ using System.IO.Pipelines;
 
 namespace IMitto.Pipelines;
 
-public class SerializingPipeWriter : PipeWriter
+public class MittoPipeWriter : PipeWriter
 {
 	private readonly PipeWriter _innerWriter;
 	private readonly MittoPipeOptions _options;
 
-	public SerializingPipeWriter(Stream stream, MittoPipeOptions options)
+	public MittoPipeWriter(Stream stream, MittoPipeOptions options)
 		: this(Create(stream, options.CreateWriterOptions()), options)
 	{
 	}
 
-	public SerializingPipeWriter(PipeWriter innerWriter, MittoPipeOptions options)
+	public MittoPipeWriter(PipeWriter innerWriter, MittoPipeOptions options)
 	{
 		_innerWriter = innerWriter;
 		_options = options;

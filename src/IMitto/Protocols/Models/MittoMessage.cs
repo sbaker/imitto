@@ -1,8 +1,7 @@
-﻿using IMitto.Protocols.Models;
-using IMitto.Settings;
+﻿using IMitto.Settings;
 using System.Text.Json;
 
-namespace IMitto.Protocols;
+namespace IMitto.Protocols.Models;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 public abstract class MittoMessage(MittoHeader header) : IMittoMessage

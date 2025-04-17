@@ -1,6 +1,6 @@
 ﻿using IMitto.Net;
 
-namespace IMitto.Protocols;
+namespace IMitto.Protocols.Models;
 
 public class MittoHeader : Dictionary<string, object?>
 {

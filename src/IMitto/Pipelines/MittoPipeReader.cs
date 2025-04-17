@@ -4,18 +4,18 @@ using System.IO.Pipelines;
 
 namespace IMitto.Pipelines;
 
-public class SerializingPipeReader : PipeReader
+public class MittoPipeReader : PipeReader
 {
 	private readonly PipeReader _innerReader;
 	private readonly MittoPipeOptions _options;
 
-	public SerializingPipeReader(Stream stream, MittoPipeOptions options)
+	public MittoPipeReader(Stream stream, MittoPipeOptions options)
 		: this(Create(stream, options.CreateReaderOptions()), options)
 	{
 
 	}
 
-	public SerializingPipeReader(PipeReader innerReader, MittoPipeOptions options)
+	public MittoPipeReader(PipeReader innerReader, MittoPipeOptions options)
 	{
 		_innerReader = innerReader;
 		_options = options;

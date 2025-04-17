@@ -1,6 +1,5 @@
 ﻿using IMitto.Net.Clients;
 using Microsoft.Extensions.Options;
-using IMitto.Protocols;
 using IMitto.Protocols.Models;
 
 namespace IMitto.Producers;

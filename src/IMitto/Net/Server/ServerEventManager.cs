@@ -60,7 +60,7 @@ public sealed class ServerEventManager : MittoLocalEvents, IServerEventManager
 
 							var connection = await channelReader.ReadAsync(token).Await();
 
-							var context = new ClientConnectionContext(connection, token);
+							var context = new ClientConnectionContext(connection);
 							context.SubscribeToEvents();
 							_connections.Add(context);
 						}

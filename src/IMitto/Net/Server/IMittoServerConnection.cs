@@ -2,5 +2,5 @@
 
 public interface IMittoServerConnection : IMittoConnection
 {
-	Task<MittoSocket> AcceptAsync(CancellationToken token = default);
+	Task<MittoPipelineSocket> AcceptAsync(CancellationToken token = default);
 }

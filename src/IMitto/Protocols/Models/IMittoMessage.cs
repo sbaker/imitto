@@ -1,7 +1,6 @@
-﻿using IMitto.Protocols.Models;
-using IMitto.Settings;
+﻿using IMitto.Settings;
 
-namespace IMitto.Protocols;
+namespace IMitto.Protocols.Models;
 
 public interface IMittoMessage
 {
