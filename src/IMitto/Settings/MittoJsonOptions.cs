@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.Json;
 using IMitto.Converters;
-using IMitto.Net.Models;
 using System.Text.Json.Serialization.Metadata;
+using IMitto.Protocols.Models;
 
 namespace IMitto.Settings;
 

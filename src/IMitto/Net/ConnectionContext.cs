@@ -1,5 +1,5 @@
-﻿using IMitto.Net.Models;
-using IMitto.Net.Server;
+﻿using IMitto.Protocols;
+using IMitto.Protocols.Models;
 
 namespace IMitto.Net;
 
@@ -7,7 +7,7 @@ public class ConnectionContext : Disposable
 {
 	private Task? _backgroudTask;
 
-	public ConnectionContext(IMittoEvents eventAggregator, MittoSocket socket, CancellationToken token)
+	public ConnectionContext(IMittoEvents eventAggregator, MittoPipelineSocket socket)
 	{
 		EventAggregator = eventAggregator;
 		Socket = socket;
@@ -17,29 +17,12 @@ public class ConnectionContext : Disposable
 
 	public IMittoEvents EventAggregator { get; }
 	
-	public MittoSocket Socket { get; }
-
-	public Task BackgroundTask
-	{
-		get
-		{
-			return _backgroudTask ?? Task.CompletedTask;
-		}
-		set
-		{
-			_backgroudTask = value;
-		}
-	}
+	public MittoPipelineSocket Socket { get; }
 
 	public TopicRegistrationModel? Topics { get; set; }
 
 	protected override void DisposeCore()
 	{
 		Socket.Dispose();
-
-		if (!BackgroundTask.IsCompleted)
-		{
-			BackgroundTask?.Wait();
-		}
 	}
 }

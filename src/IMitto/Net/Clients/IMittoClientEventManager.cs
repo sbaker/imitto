@@ -1,5 +1,4 @@
 ﻿using IMitto.Local;
-using IMitto.Net.Models;
 
 namespace IMitto.Net.Clients;
 

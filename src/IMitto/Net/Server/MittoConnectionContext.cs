@@ -1,7 +1,7 @@
 ﻿using IMitto.Middlware;
-using IMitto.Net.Requests;
-using IMitto.Net.Models;
-using IMitto.Net.Responses;
+using IMitto.Protocols.Models;
+using IMitto.Protocols.Requests;
+using IMitto.Protocols.Responses;
 
 namespace IMitto.Net.Server;
 

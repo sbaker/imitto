@@ -2,6 +2,6 @@
 
 public interface IMittoDuplexPipe
 {
-	SerializingPipeReader Reader { get; }
-	SerializingPipeWriter Writer { get; }
+	MittoPipeReader Reader { get; }
+	MittoPipeWriter Writer { get; }
 }

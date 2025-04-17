@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
-using IMitto.Net;
-using IMitto.Net.Models;
+using IMitto.Protocols.Models;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace IMitto;

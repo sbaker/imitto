@@ -1,9 +1,7 @@
 using IMitto.Pipelines;
 using System.Text;
-using IMitto.Net.Models;
-using IMitto.Converters;
 using IMitto.Settings;
-using IMitto.Net;
+using IMitto.Protocols.Models;
 
 namespace IMitto.Tests.Pipelines;
 

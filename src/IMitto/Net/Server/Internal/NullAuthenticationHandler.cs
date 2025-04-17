@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-using IMitto.Net.Requests;
 using IMitto.Net.Server.Results;
-using IMitto.Net.Models;
+using IMitto.Protocols.Models;
+using IMitto.Protocols.Requests;
 
 namespace IMitto.Net.Server.Internal;
 

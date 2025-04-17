@@ -16,37 +16,37 @@ public static class MittoPipe
 		return new MittoDuplexPipe(stream, options.Pipeline);
 	}
 
-	public static SerializingPipeReader CreateReader(Stream stream, MittoPipeOptions? options = null)
+	public static MittoPipeReader CreateReader(Stream stream, MittoPipeOptions? options = null)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
 
 		var pipeOptions = options ?? new MittoPipeOptions();
 		var reader = PipeReader.Create(stream, pipeOptions.CreateReaderOptions());
-		return new SerializingPipeReader(reader, pipeOptions);
+		return new MittoPipeReader(reader, pipeOptions);
 	}
 
-	public static SerializingPipeReader CreateReader(Stream stream, StreamPipeReaderOptions? options = null)
+	public static MittoPipeReader CreateReader(Stream stream, StreamPipeReaderOptions? options = null)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
 
 		var reader = PipeReader.Create(stream, options);
-		return new SerializingPipeReader(reader, new MittoPipeOptions());
+		return new MittoPipeReader(reader, new MittoPipeOptions());
 	}
 
-	public static SerializingPipeWriter CreateWriter(Stream stream, MittoPipeOptions? options = null)
+	public static MittoPipeWriter CreateWriter(Stream stream, MittoPipeOptions? options = null)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
 
 		var pipeOptions = options ?? new MittoPipeOptions();
 		var writer = PipeWriter.Create(stream, pipeOptions.CreateWriterOptions());
-		return new SerializingPipeWriter(writer, pipeOptions);
+		return new MittoPipeWriter(writer, pipeOptions);
 	}
 
-	public static SerializingPipeWriter CreateWriter(Stream stream, StreamPipeWriterOptions? options = null)
+	public static MittoPipeWriter CreateWriter(Stream stream, StreamPipeWriterOptions? options = null)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
 
 		var writer = PipeWriter.Create(stream, options);
-		return new SerializingPipeWriter(writer, new MittoPipeOptions());
+		return new MittoPipeWriter(writer, new MittoPipeOptions());
 	}
 }
