@@ -1,17 +1,12 @@
-﻿using IMitto.Protocols.V1;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace IMitto.Protocols;
 
-public interface IMittoHeaders : IEnumerable<IMittoHeader>
+public interface IMittoHeaders : IReadOnlyCollection<IMittoHeader>
 {
-	IMittoHeader this[MittoHeaderKey key] { get; }
+	static abstract byte HeaderCountLength { get; }
 
-	IMittoHeader this[byte key] { get; }
-
-	IMittoHeader this[string key] { get; }
-
-	int Count { get; }
+	void Add(IMittoHeader header);
 
 	bool TryGetValue(byte key, [NotNullWhen(true)] out IMittoHeader? value);
 

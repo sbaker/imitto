@@ -33,6 +33,8 @@ public sealed class MittoHeader : MittoByteContent<byte>, IMittoHeader
 		IsSerialized = true;
 	}
 
+	public bool HasStringKey => !string.IsNullOrEmpty(Key);
+
 	public string Value
 	{
 		get
@@ -95,5 +97,16 @@ public sealed class MittoHeader : MittoByteContent<byte>, IMittoHeader
 		}
 	}
 
-	public bool HasStringKey => !string.IsNullOrEmpty(Key);
+	public static implicit operator KeyValuePair<string, string>(MittoHeader header)
+	{
+		return new KeyValuePair<string, string>(header.Key, header.Value);
+	}
+	public static implicit operator MittoHeader(KeyValuePair<string, string> header)
+	{
+		return new MittoHeader(header.Key, header.Value);
+	}
+	public static implicit operator MittoHeader(MittoHeaderKey keyId)
+	{
+		return new MittoHeader(keyId, ReadOnlySequence<byte>.Empty, ReadOnlySequence<byte>.Empty);
+	}
 }

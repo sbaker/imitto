@@ -1,6 +1,5 @@
 ﻿using IMitto.Net;
 using IMitto.Pipelines;
-using System;
 
 namespace IMitto.Protocols;
 
@@ -14,12 +13,11 @@ public static class MittoProtocol
 		_ => throw new NotSupportedException($"Protocol version {version} is not supported.")
 	};
 
-	public static IPackageBuilder CreatePackageBuilder(MittoProtocolVersion version = MittoProtocolVersion.V1)
-		=> version switch
-		{
-			MittoProtocolVersion.V1 => new V1.MittoPackageBuilder(),
-			_ => throw new NotSupportedException($"Protocol version {version} is not supported.")
-		};
+	public static IPackageBuilder CreatePackageBuilder(MittoProtocolVersion version = MittoProtocolVersion.V1) => version switch
+	{
+		MittoProtocolVersion.V1 => new V1.MittoPackageBuilder(),
+		_ => throw new NotSupportedException($"Protocol version {version} is not supported.")
+	};
 
 	public static Task SendAsync(ConnectionContext context, IMittoPackage package, CancellationToken token = default)
 	{
@@ -34,15 +32,15 @@ public static class MittoProtocol
 		return transport.ReadPackageAsync(reader, token);
 	}
 
-	public static Task WritePackageAsync(MittoPipeWriter writer, IMittoPackage package, CancellationToken token = default)
-	{
-		var transport = CreateTransport(package.Command.Version);
-		return transport.WritePackageAsync(writer, package, token);
-	}
-
 	public static Task<IMittoPackage> ReceiveAsync(ConnectionContext context, MittoProtocolVersion version = MittoProtocolVersion.V1, CancellationToken token = default)
 	{
 		var transport = CreateTransport(version);
 		return transport.ReceiveAsync(context, token);
+	}
+
+	public static Task WritePackageAsync(MittoPipeWriter writer, IMittoPackage package, CancellationToken token = default)
+	{
+		var transport = CreateTransport(package.Command.Version);
+		return transport.WritePackageAsync(writer, package, token);
 	}
 }

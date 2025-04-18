@@ -1,6 +1,6 @@
 ﻿namespace IMitto.Protocols.V1
 {
-	internal class MittoPackageBuilder : MittoPackageBuilderBase
+	internal sealed class MittoPackageBuilder : MittoPackageBuilderBase
 	{
 		protected override MittoProtocolVersion Version => MittoProtocolVersion.V1;
 
@@ -10,10 +10,14 @@
 			{
 				throw new InvalidOperationException("Action is not set.");
 			}
-			var command = new MittoCommand(Version, Action, Modifier);
-			var headers = new MittoHeaders(Headers.Select(kvp => new MittoHeader(kvp.Key, kvp.Value)));
-			var content = new MittoContent(Package);
-			return new MittoPackage(command, headers, content);
+			
+			var command = new MittoCommand(Action, Modifier);
+			return new MittoPackage(command, new MittoHeaders(Headers), new MittoContent(Package));
+		}
+
+		protected override IMittoHeader CreateHeaderFromKvp(string key, string value)
+		{
+			return new MittoHeader(key, value);
 		}
 	}
 }

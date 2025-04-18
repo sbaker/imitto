@@ -2,14 +2,19 @@
 
 public abstract class MittoPackageBuilderBase : IPackageBuilder
 {
+	protected MittoPackageBuilderBase()
+	{
+		Headers.AddRange(
+			CreateHeaderFromKvp("encoding", "utf-8"),
+			CreateHeaderFromKvp("timestamp", TimeProvider.System.GetUtcNow().ToString("u"))
+		);
+	}
+
 	protected abstract MittoProtocolVersion Version { get; }
 
 	protected MittoAction Action { get; set; } = MittoAction.None;
 
-	protected List<KeyValuePair<string, string>> Headers { get; } = [
-		new KeyValuePair<string, string>("encoding", "utf-8"),
-		new KeyValuePair<string, string>("timestamp", TimeProvider.System.GetUtcNow().ToString("u")),
-	];
+	protected List<IMittoHeader> Headers { get; } = [];
 
 	protected MittoModifier Modifier { get; set; } = MittoModifier.None;
 	
@@ -37,7 +42,7 @@ public abstract class MittoPackageBuilderBase : IPackageBuilder
 		ArgumentNullException.ThrowIfNull(key, nameof(key));
 		ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-		Headers.Add(new KeyValuePair<string, string>(key, value));
+		Headers.Add(CreateHeaderFromKvp(key, value));
 
 		return this;
 	}
@@ -46,7 +51,7 @@ public abstract class MittoPackageBuilderBase : IPackageBuilder
 	{
 		ArgumentNullException.ThrowIfNull(headers, nameof(headers));
 
-		Headers.AddRange(headers);
+		Headers.AddRange(CreateKvpToHeader(headers));
 
 		return this;
 	}
@@ -55,7 +60,7 @@ public abstract class MittoPackageBuilderBase : IPackageBuilder
 	{
 		ArgumentNullException.ThrowIfNull(headers, nameof(headers));
 		
-		Headers.AddRange(headers);
+		Headers.AddRange(CreateKvpToHeader(headers));
 
 		return this;
 	}
@@ -70,4 +75,13 @@ public abstract class MittoPackageBuilderBase : IPackageBuilder
 	}
 
 	public abstract IMittoPackage Build();
+
+	protected abstract IMittoHeader CreateHeaderFromKvp(string key, string value);
+
+	protected ReadOnlySpan<IMittoHeader> CreateKvpToHeader(IEnumerable<KeyValuePair<string, string>> headers)
+	{
+		return headers.Select(
+			kvp => CreateHeaderFromKvp(kvp.Key, kvp.Value)
+		).ToArray();
+	}
 }
