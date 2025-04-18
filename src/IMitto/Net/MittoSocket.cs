@@ -14,15 +14,11 @@ public class MittoSocket : Disposables
 	private readonly MittoOptions _options;
 	private readonly JsonSerializerOptions _serializerOptions;
 	private readonly StreamReader _reader;
-	private readonly TcpClient _tcpClient;
 	private readonly NetworkStream _networkStream;
 	private readonly StreamWriter _writer;
 
-	public MittoSocket(TcpClient tcpClient, MittoOptions options)
+	internal MittoSocket(NetworkStream stream, MittoOptions options)
 	{
-		var stream = tcpClient.GetStream();
-
-		_tcpClient = Add(tcpClient, tcpClient.Close);
 		_networkStream = Add(stream, () => _networkStream?.Close());
 
 		_reader = Add(new StreamReader(stream), () => _reader?.Close());
@@ -33,9 +29,25 @@ public class MittoSocket : Disposables
 		_serializerOptions = options.Json.Serializer;
 	}
 
-	public bool IsConnected => _tcpClient.Client.Connected;
+	public MittoSocket(TcpClient tcpClient, MittoOptions options)
+	{
+		var stream = tcpClient.GetStream();
 
-	public bool DataAvailable => IsConnected && _networkStream.DataAvailable;
+		Add(tcpClient, tcpClient.Close);
+
+		_networkStream = Add(stream, () => _networkStream?.Close());
+
+		_reader = Add(new StreamReader(stream), () => _reader?.Close());
+		_writer = Add(new StreamWriter(stream), () => _writer?.Close());
+
+		_encoding = options.Encoding;
+		_options = options;
+		_serializerOptions = options.Json.Serializer;
+	}
+
+	public bool IsConnected => _networkStream.Socket.Connected;
+
+	public bool DataAvailable => IsConnected && _networkStream.Socket.Available != 0;
 
 	protected MittoOptions Options => _options;
 

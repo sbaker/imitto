@@ -8,16 +8,13 @@ public sealed class MittoCommand : IMittoCommand
 
 	public static byte ModifierLength => 1;
 
-	public static byte HeaderCountLength => 2;
-
-	public MittoCommand(MittoProtocolVersion version, MittoAction action, MittoModifier modifier)
+	public MittoCommand(MittoAction action, MittoModifier modifier)
 	{
-		Version = version;
 		Action = action;
 		Modifier = modifier;
 	}
 
-	public MittoProtocolVersion Version { get; }
+	public MittoProtocolVersion Version { get; } = MittoProtocolVersion.V1;
 
 	public MittoAction Action { get; }
 

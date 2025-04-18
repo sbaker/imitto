@@ -3,17 +3,21 @@ using IMitto.Pipelines;
 
 namespace IMitto.Protocols;
 
-public interface IMittoTransport
+public interface IMittoTransport : IMittoTransport<IMittoPackage>
+{
+}
+
+public interface IMittoTransport<TPackage> where TPackage  : IMittoPackage
 {
 	static readonly MittoProtocolVersion Version = MittoProtocolVersion.V1;
 
 	MittoProtocolVersion ProtocolVersion { get; }
 
-	Task SendAsync(ConnectionContext context, IMittoPackage package, CancellationToken token = default);
+	Task<TPackage> ReadPackageAsync(MittoPipeReader reader, CancellationToken token = default);
 
-	Task<IMittoPackage> ReceiveAsync(ConnectionContext context, CancellationToken token = default);
+	Task WritePackageAsync(MittoPipeWriter writer, TPackage package, CancellationToken token = default);
 
-	Task<IMittoPackage> ReadPackageAsync(MittoPipeReader reader, CancellationToken token = default);
+	Task SendAsync(ConnectionContext context, TPackage package, CancellationToken token = default);
 
-	Task WritePackageAsync(MittoPipeWriter writer, IMittoPackage package, CancellationToken token);
+	Task<TPackage> ReceiveAsync(ConnectionContext context, CancellationToken token = default);
 }

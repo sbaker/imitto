@@ -227,7 +227,7 @@ public class ProtocolTransportTests
 		var package = MittoProtocol.ReadPackageAsync(reader, MittoProtocolVersion.V1, CancellationToken.None);
 	}
 
-	private const int _iterations = 1;
+	private const int _iterations = 2;
 
 	[Theory]
 	[InlineData(Data.Small, Data.SmallBody)]
@@ -252,18 +252,18 @@ public class ProtocolTransportTests
 		var package = builder.Build();
 
 		//Write the content.
-		using var ms = new MemoryStream(ArrayPool<byte>.Shared.Rent(4096));
+		using var stream = new MemoryStream(ArrayPool<byte>.Shared.Rent(4096));
 
 		for (var i = 0; i < _iterations; i++)
 		{
-			ms.Position = 0;
+			stream.Position = 0;
 
-			var writer = MittoPipe.CreateWriter(ms, MittoOptions.Default.Pipeline);
+			var writer = MittoPipe.CreateWriter(stream, MittoOptions.Default.Pipeline);
 			await MittoProtocol.WritePackageAsync(writer, package, CancellationToken.None);
 
-			ms.Position = 0;
+			stream.Position = 0;
 
-			var reader = MittoPipe.CreateReader(ms, MittoOptions.Default.Pipeline);
+			var reader = MittoPipe.CreateReader(stream, MittoOptions.Default.Pipeline);
 			package = await MittoProtocol.ReadPackageAsync(reader, MittoProtocolVersion.V1, CancellationToken.None);
 
 			Assert.Equal(MittoAction.Session, package.Command.Action);

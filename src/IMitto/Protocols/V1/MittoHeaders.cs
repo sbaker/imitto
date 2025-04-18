@@ -1,10 +1,9 @@
-﻿using System.Collections;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 
 namespace IMitto.Protocols.V1;
 
-public class MittoHeaders : Collection<IMittoHeader>, IMittoHeaders
+public sealed class MittoHeaders : Collection<IMittoHeader>, IMittoHeaders
 {
 	public MittoHeaders()
 	{
@@ -18,11 +17,7 @@ public class MittoHeaders : Collection<IMittoHeader>, IMittoHeaders
 	{
 	}
 
-	public IMittoHeader this[byte key] => this.First(h => h.HasStringKey && h.KeyId == (MittoHeaderKey)key);
-
-	public IMittoHeader this[string key] => this.First(h => h.HasStringKey && h.Key == key);
-
-	public IMittoHeader this[MittoHeaderKey key] => this.First(h => h.KeyId == key);
+	public static byte HeaderCountLength => 1;
 
 	public bool TryGetValue(byte key, [NotNullWhen(true)] out IMittoHeader? value)
 	{
@@ -55,10 +50,5 @@ public class MittoHeaders : Collection<IMittoHeader>, IMittoHeaders
 
 		value = null;
 		return false;
-	}
-
-	IEnumerator IEnumerable.GetEnumerator()
-	{
-		return GetEnumerator();
 	}
 }
