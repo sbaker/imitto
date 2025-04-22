@@ -1,10 +1,6 @@
 ﻿using System.Net.Sockets;
 using IMitto.Settings;
-using IMitto.Protocols;
-using System.IO.Pipelines;
-using System.Text;
 using IMitto.Pipelines;
-using System.Buffers;
 
 namespace IMitto.Net;
 
@@ -28,7 +24,6 @@ public class MittoPipelineSocket : MittoSocket
 	{
 		return _pipeline.Writer;
 	}
-
 
 	public override Task<TMessage?> ReadAsync<TMessage>(CancellationToken token = default) where TMessage : default
 	{

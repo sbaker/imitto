@@ -19,6 +19,7 @@ public class ProtocolTransportTests
 	[InlineData(Data.Large, Data.SmallBody)]
 	[InlineData(Data.Large, Data.MediumBody)]
 	[InlineData(Data.Large, Data.LargeBody)]
+	[InlineData(Data.Large, Data.ExtraLarge)]
 	public void TestingProtocolFormat(string headerKey, string body)
 	{
 		var kvpHeaders = Data.GetHeaders(headerKey);
@@ -148,6 +149,7 @@ public class ProtocolTransportTests
 	[InlineData(Data.Large, Data.SmallBody)]
 	[InlineData(Data.Large, Data.MediumBody)]
 	[InlineData(Data.Large, Data.LargeBody)]
+	[InlineData(Data.Large, Data.ExtraLarge)]
 	public void TestingProtocolFormatSerializingReading(string headerKey, string body)
 	{
 		var kvpHeaders = Data.GetHeaders(headerKey);
@@ -239,6 +241,8 @@ public class ProtocolTransportTests
 	[InlineData(Data.Large, Data.SmallBody)]
 	[InlineData(Data.Large, Data.MediumBody)]
 	[InlineData(Data.Large, Data.LargeBody)]
+	[InlineData(Data.Large, Data.ExtraLarge)]
+	[InlineData(Data.Large, Data.XxLarge)]
 	[InlineData("", "")]
 	public async Task TestingProtocolFormatSerializingReadingAndWriting(string headerKey, string body)
 	{
@@ -247,12 +251,24 @@ public class ProtocolTransportTests
 		var builder = MittoProtocol.CreatePackageBuilder()
 			.WithAction(MittoAction.Session)
 			.AddHeaders(kvpHeaders)
-			.WithPackage(body);
+			.WithModifier(MittoModifier.Start)
+			.WithPackage(body switch
+			{
+				Data.ExtraLarge => Data.TenKb,
+				Data.XxLarge => Data.TenMb,
+				_ => body
+			});
+
+		var contentLength = Encoding.UTF8.GetByteCount(body switch
+		{
+			Data.ExtraLarge => Data.TenKb,
+			Data.XxLarge => Data.TenMb,
+			_ => body
+		});
 
 		var package = builder.Build();
 
-		//Write the content.
-		using var stream = new MemoryStream(ArrayPool<byte>.Shared.Rent(4096));
+		using var stream = new MemoryStream();
 
 		for (var i = 0; i < _iterations; i++)
 		{
@@ -267,8 +283,11 @@ public class ProtocolTransportTests
 			package = await MittoProtocol.ReadPackageAsync(reader, MittoProtocolVersion.V1, CancellationToken.None);
 
 			Assert.Equal(MittoAction.Session, package.Command.Action);
-			Assert.Equal(MittoModifier.None, package.Command.Modifier);
+			Assert.Equal(MittoModifier.Start, package.Command.Modifier);
 			Assert.Equal(MittoProtocolVersion.V1, package.Command.Version);
+			Assert.True(package.Content.Content.Length == contentLength);
+
+			// + 2 is from encoding and timestamp headers that are added
 			Assert.Equal(kvpHeaders.Count + 2, package.Headers.Count);
 		}
 	}
@@ -278,8 +297,10 @@ public class ProtocolTransportTests
 		public const string Small = nameof(Small);
 		public const string Medium = nameof(Medium);
 		public const string Large = nameof(Large);
+		public const string ExtraLarge = nameof(ExtraLarge);
+		public const string XxLarge = nameof(XxLarge);
 
-		private static readonly Dictionary<string, MittoHeader> _headers = new()
+		private static readonly Dictionary<string, MittoHeader> Headers = new()
 		{
 			[Small] = new MittoHeader(SmallHeaders),
 			[Medium] = new MittoHeader(MediumHeaders),
@@ -295,7 +316,11 @@ public class ProtocolTransportTests
 		public const string LargeHeaders = "timestamp:value1\ncorrelation-id:value2\nkey3:value3\nkey4:value4\nkey5:value5\nkey6:value6\nkey7:value7\nkey8:value8";
 		public const string LargeBody = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
-		public static IDictionary<string, string> GetHeaders(string name) => _headers.ContainsKey(name) ? _headers[name].Headers : [];
+		public static readonly string TenKb = new('a', 1024 * 10); // 10KB
+
+		public static readonly string TenMb = new('a', 1024 * 1024 * 10); // 10MB
+
+		public static IDictionary<string, string> GetHeaders(string name) => Headers.ContainsKey(name) ? Headers[name].Headers : [];
 
 		public sealed class MittoHeader(string headers)
 		{

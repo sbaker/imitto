@@ -15,7 +15,7 @@
 			return new MittoPackage(command, new MittoHeaders(Headers), new MittoContent(Package));
 		}
 
-		protected override IMittoHeader CreateHeaderFromKvp(string key, string value)
+		protected override IMittoHeader CreateHeader(string key, string value)
 		{
 			return new MittoHeader(key, value);
 		}

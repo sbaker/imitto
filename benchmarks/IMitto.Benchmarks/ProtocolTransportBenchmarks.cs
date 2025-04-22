@@ -58,14 +58,31 @@ public class LargeBodyProtocolTransportBenchmarks : TransportBenchmarkBase
 [ThreadingDiagnoser]
 [MarkdownExporterAttribute.Default]
 //[SimpleJob]
-public class ExtraLargeBodyProtocolTransportBenchmarks : TransportBenchmarkBase
+public class TenKbBodyProtocolTransportBenchmarks : TransportBenchmarkBase
 {
 	protected override IMittoPackage CreatePackageBuilder(IDictionary<string, string> kvpHeaders)
 	{
 		return MittoProtocol.CreatePackageBuilder()
 			.WithAction(MittoAction.Consume)
 			.AddHeaders(kvpHeaders)
-			.WithPackage(Data.ExtraLargeBody)
+			.WithPackage(Data.TenKb)
+			.Build();
+	}
+}
+
+
+[MemoryDiagnoser]
+[ThreadingDiagnoser]
+[MarkdownExporterAttribute.Default]
+//[SimpleJob]
+public class TenMbBodyProtocolTransportBenchmarks : TransportBenchmarkBase
+{
+	protected override IMittoPackage CreatePackageBuilder(IDictionary<string, string> kvpHeaders)
+	{
+		return MittoProtocol.CreatePackageBuilder()
+			.WithAction(MittoAction.Consume)
+			.AddHeaders(kvpHeaders)
+			.WithPackage(Data.TenMb)
 			.Build();
 	}
 }

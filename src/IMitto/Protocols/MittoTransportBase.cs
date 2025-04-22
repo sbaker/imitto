@@ -1,14 +1,14 @@
 ﻿using IMitto.Net;
 using IMitto.Pipelines;
+using Nerdbank.Streams;
 using System.Buffers;
+using System.Net.Mime;
 using System.Text;
 
 namespace IMitto.Protocols;
 
 public abstract class MittoTransportBase : IMittoTransport
 {
-	public static readonly MittoProtocolVersion Version = MittoProtocolVersion.V1;
-
 	public abstract MittoProtocolVersion ProtocolVersion { get; }
 
 	public virtual async Task WritePackageAsync(MittoPipeWriter writer, IMittoPackage package, CancellationToken token = default)
@@ -55,7 +55,7 @@ public abstract class MittoTransportBase : IMittoTransport
 		return key ?? $"unregistered-{keyId}-{currentHeaderIndex + 1}-key";
 	}
 
-	protected virtual async Task<TCommand> ReadCommandAsync<TCommand>(MittoPipeReader reader, Func<MittoAction, MittoModifier, TCommand> factory, CancellationToken token) where TCommand : class, IMittoCommand
+	protected virtual async Task<TCommand> ReadCommandAsync<TCommand>(MittoPipeReader reader, Func<MittoProtocolVersion, MittoAction, MittoModifier, TCommand> factory, CancellationToken token) where TCommand : class, IMittoCommand
 	{
 		TCommand? command = null;
 
@@ -70,15 +70,16 @@ public abstract class MittoTransportBase : IMittoTransport
 			{
 				while (sequenceReader.Remaining > 0 && command is null)
 				{
-					command = ReadMittoCommand(factory, ref sequenceReader);
+					command = ReadCommand(factory, ref sequenceReader);
 				}
 
 				if (result.IsCompleted) { break; }
 
-				return command;
+				return command!;
 			}
 			catch (Exception e)
 			{
+				// TODO: Handle exception
 				reader.AdvanceTo(buffer.Start, buffer.End);
 				break;
 			}
@@ -87,36 +88,6 @@ public abstract class MittoTransportBase : IMittoTransport
 				reader.AdvanceTo(sequenceReader.Position, buffer.End);
 			}
 		}
-
-		return command;
-	}
-
-	private static TCommand? ReadMittoCommand<TCommand>(Func<MittoAction, MittoModifier, TCommand> factory, ref SequenceReader<byte> sequenceReader) where TCommand : class, IMittoCommand
-	{
-		TCommand? command = null;
-
-		if (!sequenceReader.TryReadExact(TCommand.VersionLength, out var versionBytes))
-		{
-			return null;
-		}
-
-		var version = MittoConverter.ToProtocolVersion(versionBytes.FirstSpan);
-
-		if (!sequenceReader.TryReadExact(TCommand.ActionLength, out var actionBytes))
-		{
-			return null;
-		}
-
-		var action = MittoConverter.ToAction(actionBytes.FirstSpan);
-
-		if (!sequenceReader.TryReadExact(TCommand.ModifierLength, out var modifierBytes))
-		{
-			return null;
-		}
-
-		var modifier = MittoConverter.ToModifier(modifierBytes.FirstSpan);
-
-		command = factory(action, modifier);
 
 		return command;
 	}
@@ -157,7 +128,7 @@ public abstract class MittoTransportBase : IMittoTransport
 					headers.Add(header);
 				}
 
-				if (result.IsCompleted) { break; }
+				return headers;
 			}
 			catch (Exception e)
 			{
@@ -175,26 +146,50 @@ public abstract class MittoTransportBase : IMittoTransport
 
 	protected virtual async Task<TContent> ReadContentAsync<TContent>(MittoPipeReader reader, Func<ReadOnlySequence<byte>, TContent> factory, CancellationToken token) where TContent : class, IMittoContent
 	{
-		TContent? content = null;
+		var sequence = new Sequence<byte>();
+		var contentTotalLength = -1;
+		var contentReadLength = 0;
+		var remainingBytes = 0;
 
 		while (!token.IsCancellationRequested)
 		{
 			var result = await reader.ReadAsync(token);
-
 			var buffer = result.Buffer;
 			var sequenceReader = new SequenceReader<byte>(buffer);
 
 			try
 			{
-				while (sequenceReader.Remaining > 0 && content is null)
+				if (sequenceReader.Remaining > 0)
 				{
-					if (!sequenceReader.TryReadExact(TContent.ContentLengthByteCount, out var contentLengthBytes)) { break; }
+					if (contentTotalLength < 0)
+					{
+						if (!sequenceReader.TryReadExact(TContent.ContentLengthByteCount, out var contentLengthBytes)) { break; }
+						contentTotalLength = BitConverter.ToInt32(contentLengthBytes.FirstSpan);
+						contentReadLength = 0;
+						remainingBytes = contentTotalLength;
+					}
 
-					var contentLength = BitConverter.ToInt32(contentLengthBytes.FirstSpan);
+					if (remainingBytes > 0)
+					{
+						if (remainingBytes >= sequenceReader.Remaining && sequenceReader.TryReadExact((int)sequenceReader.Remaining, out var contentBytes))
+						{
+							sequence.Write(contentBytes);
+							contentReadLength += (int)contentBytes.Length;
+							remainingBytes -= (int)contentBytes.Length;
+						}
+						else
+						{
+							sequenceReader.TryReadExact(remainingBytes, out var remainingContentBytes);
+							sequence.Write(remainingContentBytes);
+							contentReadLength += (int)remainingContentBytes.Length;
+							remainingBytes -= (int)remainingContentBytes.Length;
+						}
+					}
+				}
 
-					if (!sequenceReader.TryReadExact(contentLength, out var contentBytes)) { break; }
-
-					content = factory(contentBytes);
+				if (contentTotalLength == contentReadLength)
+				{
+					return factory(sequence.AsReadOnlySequence);
 				}
 
 				if (result.IsCompleted) { break; }
@@ -203,7 +198,6 @@ public abstract class MittoTransportBase : IMittoTransport
 			{
 				//_logger.LogError(e, "Error reading content");
 				reader.AdvanceTo(buffer.Start, buffer.End);
-				break;
 			}
 			finally
 			{
@@ -211,8 +205,46 @@ public abstract class MittoTransportBase : IMittoTransport
 			}
 		}
 
-		return content;
+		return factory(ReadOnlySequence<byte>.Empty);
 	}
+
+	//{
+	//	TContent? content = null;
+
+	//	while (!token.IsCancellationRequested)
+	//	{
+	//		var result = await reader.ReadAsync(token);
+
+	//		var buffer = result.Buffer;
+	//		var sequenceReader = new SequenceReader<byte>(buffer);
+
+	//		try
+	//		{
+	//			while (sequenceReader.Remaining > 0 && content is null)
+	//			{
+	//				if (!sequenceReader.TryReadExact(TContent.ContentLengthByteCount, out var contentLengthBytes)) { break; }
+
+	//				var contentLength = BitConverter.ToInt32(contentLengthBytes.FirstSpan);
+
+	//				if (!sequenceReader.TryReadExact(contentLength, out var contentBytes)) { break; }
+
+	//				content = factory(contentBytes);
+	//			}
+
+	//			if (result.IsCompleted) { break; }
+	//		}
+	//		catch (Exception e)
+	//		{
+	//			//_logger.LogError(e, "Error reading content");
+	//			reader.AdvanceTo(buffer.Start, buffer.End);
+	//		}
+	//		finally
+	//		{
+	//			reader.AdvanceTo(sequenceReader.Position, buffer.End);
+	//		}
+	//	}
+
+	//	return content;
 
 	protected virtual async Task WriteCommandAsync(MittoPipeWriter writer, IMittoCommand command, CancellationToken token = default)
 	{
@@ -240,45 +272,37 @@ public abstract class MittoTransportBase : IMittoTransport
 
 	protected virtual async Task WriteHeadersAsync(MittoPipeWriter writer, IMittoHeaders headers, CancellationToken token = default)
 	{
-		await Task.Delay(1, token);
+		var buffer = new AutoAdvancingBufferWriter<byte>(writer);
 
-		var buffer = writer.GetMemory();
-		var memoryWriter = new MemoryWriter<byte>(buffer);
-
-
-		memoryWriter.Write((byte)headers.Count);
+		buffer.Write((byte)headers.Count);
 
 		foreach (var kvp in headers)
 		{
 			if (!kvp.HasStringKey)
 			{
-				memoryWriter.Write((byte)kvp.KeyId);
+				buffer.Write((byte)kvp.KeyId);
 			}
 			else
 			{
-				memoryWriter.Write((byte)MittoHeaderKey.Custom);
+				buffer.Write((byte)MittoHeaderKey.Custom);
 				var keyBytes = Encoding.UTF8.GetBytes(kvp.Key);
-				memoryWriter.Write((byte)keyBytes.Length);
-				memoryWriter.Write(keyBytes);
+				buffer.Write((byte)keyBytes.Length);
+				buffer.Write(keyBytes);
 			}
 
 			if (kvp.IsSerialized && kvp is IMittoByteContent<byte> content)
 			{
-				memoryWriter.Write(content.Content);
+				buffer.Write(content.Content);
 			}
 			else
 			{
-				//var valueBytes = Encoding.UTF8.GetByteCount(kvp.Value);
-				//memoryWriter.Write
-				//Encoding.UTF8.GetChars(kvp.Value.AsSpan(), writer);
-
 				var valueBytes = Encoding.UTF8.GetBytes(kvp.Value);
-				memoryWriter.Write((byte)valueBytes.Length);
-				memoryWriter.Write(valueBytes);
+				buffer.Write((byte)valueBytes.Length);
+				buffer.Write(valueBytes);
 			}
 		}
 
-		writer.Advance(memoryWriter.WrittenLength);
+		writer.Advance(buffer.WrittenLength);
 
 		var flushResult = await writer.FlushAsync(token).Await();
 
@@ -295,22 +319,21 @@ public abstract class MittoTransportBase : IMittoTransport
 
 	protected virtual async Task WriteContentAsync(MittoPipeWriter writer, IMittoContent content, CancellationToken token = default)
 	{
-		var buffer = writer.GetMemory();
-		var memoryWriter = new MemoryWriter<byte>(buffer);
+		var buffer = new AutoAdvancingBufferWriter<byte>(writer);
 
 		if (content.IsSerialized && content is IMittoByteContent<int> byteContent)
 		{
-			memoryWriter.Write(BitConverter.GetBytes((int)byteContent.Content.Length));
-			memoryWriter.Write(byteContent.Content);
+			buffer.Write(BitConverter.GetBytes((int)byteContent.Content.Length));
+			buffer.Write(byteContent.Content);
 		}
 		else
 		{
-			var contentBytes = Encoding.UTF8.GetBytes(content.Package!);
-			memoryWriter.Write(BitConverter.GetBytes(contentBytes.Length));
-			memoryWriter.Write(contentBytes);
+			var contentBytes = Encoding.UTF8.GetBytes(content.Package);
+			buffer.Write(BitConverter.GetBytes(contentBytes.Length));
+			buffer.Write(contentBytes);
 		}
 
-		writer.Advance(memoryWriter.WrittenLength);
+		writer.Advance(buffer.WrittenLength);
 
 		var flushResult = await writer.FlushAsync(token).Await();
 
@@ -326,4 +349,35 @@ public abstract class MittoTransportBase : IMittoTransport
 	}
 
 	protected abstract IMittoPackage CreatePackage(IMittoCommand command, IMittoHeaders headers, IMittoContent content);
+
+	private static TCommand? ReadCommand<TCommand>(Func<MittoProtocolVersion, MittoAction, MittoModifier, TCommand> factory, ref SequenceReader<byte> sequenceReader)
+		where TCommand : class, IMittoCommand
+	{
+		TCommand? command = null;
+
+		if (!sequenceReader.TryReadExact(TCommand.VersionLength, out var versionBytes))
+		{
+			return null;
+		}
+
+		MittoProtocolVersion version = MittoConverter.ToProtocolVersion(versionBytes.FirstSpan);
+
+		if (!sequenceReader.TryReadExact(TCommand.ActionLength, out var actionBytes))
+		{
+			return null;
+		}
+
+		var action = MittoConverter.ToAction(actionBytes.FirstSpan);
+
+		if (!sequenceReader.TryReadExact(TCommand.ModifierLength, out var modifierBytes))
+		{
+			return null;
+		}
+
+		var modifier = MittoConverter.ToModifier(modifierBytes.FirstSpan);
+
+		command = factory(version, action, modifier);
+
+		return command;
+	}
 }

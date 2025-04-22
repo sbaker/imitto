@@ -13,7 +13,7 @@ public static class MittoProtocol
 		_ => throw new NotSupportedException($"Protocol version {version} is not supported.")
 	};
 
-	public static IPackageBuilder CreatePackageBuilder(MittoProtocolVersion version = MittoProtocolVersion.V1) => version switch
+	public static IMittoPackageBuilder CreatePackageBuilder(MittoProtocolVersion version = MittoProtocolVersion.V1) => version switch
 	{
 		MittoProtocolVersion.V1 => new V1.MittoPackageBuilder(),
 		_ => throw new NotSupportedException($"Protocol version {version} is not supported.")

@@ -12,17 +12,25 @@ public interface IMittoByteContent<TLength> : IMittoMessageItem where TLength : 
 }
 
 
-public class MittoByteContent<TLength>(ReadOnlySequence<byte> content) : IMittoByteContent<TLength> where TLength : struct, INumber<TLength>
+public class MittoByteContent<TLength> : IMittoByteContent<TLength> where TLength : struct, INumber<TLength>
 {
+	public MittoByteContent(ReadOnlySequence<byte> content)
+	{
+		ContentLength = new Length<TLength>(() => TLength.CreateChecked(Content.Length));
+
+		Content = new ReadOnlySequence<byte>(content.ToArray());
+		IsSerialized = !content.IsEmpty;
+	}
+
 	public MittoByteContent() : this(ReadOnlySequence<byte>.Empty)
 	{
 	}
 
-	public Length<TLength> ContentLength { get; } = new Length<TLength>(() => TLength.CreateChecked(content.Length));
+	public Length<TLength> ContentLength { get; }
 
-	public ReadOnlySequence<byte> Content { get; set; } = content;
+	public ReadOnlySequence<byte> Content { get; set; }
 
-	public bool IsSerialized { get; protected set; } = !content.IsEmpty;
+	public bool IsSerialized { get; protected set; }
 
 	public string ReadContentAsString()
 	{
@@ -38,7 +46,7 @@ public class MittoByteContent<TLength>(ReadOnlySequence<byte> content) : IMittoB
 
 		if (content.IsSingleSegment)
 		{
-			return Encoding.UTF8.GetString(content.FirstSpan);
+			return Encoding.UTF8.GetString(content.First.Span);
 		}
 
 		return string.Create((int)content.Length, content, (result, buffer) =>
