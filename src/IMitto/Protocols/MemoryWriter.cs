@@ -2,7 +2,90 @@
 
 namespace IMitto.Protocols;
 
-public struct MemoryWriter<T>
+public ref struct AutoAdvancingBufferWriter<T> : IWriter<T>
+{
+	private readonly IBufferWriter<T> _writer;
+	private readonly int _defaultCapacity;
+	private MemoryWriter<T> _memoryWriter;
+
+	public readonly int WrittenLength => _memoryWriter.WrittenLength;
+
+	public AutoAdvancingBufferWriter(IBufferWriter<T> writer, int defaultMemoryCapacity = 4096)
+	{
+		ArgumentOutOfRangeException.ThrowIfLessThan(defaultMemoryCapacity, 0, nameof(defaultMemoryCapacity));
+
+		_writer = writer;
+		_defaultCapacity = defaultMemoryCapacity;
+		_memoryWriter = new MemoryWriter<T>(writer.GetMemory(_defaultCapacity));
+	}
+
+	public void EnsureCapacity(int expected)
+	{
+		if (!_memoryWriter.HasCapacity(expected))
+		{
+			Advance(expected);
+		}
+	}
+
+	public void EnsureCapacity(long expected)
+	{
+		if (!_memoryWriter.HasCapacity(expected))
+		{
+			Advance((int)expected);
+		}
+	}
+
+	private void Advance(int? excepctedCapacity = null)
+	{
+		var neededCapacity = excepctedCapacity ?? _defaultCapacity;
+
+		ArgumentOutOfRangeException.ThrowIfLessThan(neededCapacity, 0, nameof(excepctedCapacity));
+
+		if (neededCapacity > _defaultCapacity)
+		{
+			// If the needed capacity is greater than the default
+			// capacity, add a little to the end of the needed buffer.
+			neededCapacity += _defaultCapacity;
+		}
+
+		_writer.Advance(_memoryWriter.WrittenLength);
+
+		var memory = _writer.GetMemory(neededCapacity);
+
+		_memoryWriter = new MemoryWriter<T>(memory);
+	}
+
+	public readonly bool HasCapacity(int expected)
+	{
+		return _memoryWriter.HasCapacity(expected);
+	}
+
+	public void Write(T value)
+	{
+		EnsureCapacity(1);
+		_memoryWriter.Write(value);
+	}
+
+	public void Write(Span<T> span)
+	{
+		EnsureCapacity(span.Length);
+		_memoryWriter.Write(span);
+	}
+
+	public void Write(ReadOnlySpan<T> span)
+	{
+		EnsureCapacity(span.Length);
+		_memoryWriter.Write(span);
+	}
+
+	public void Write(ReadOnlySequence<T> sequence)
+	{
+		EnsureCapacity(sequence.Length);
+		_memoryWriter.Write(sequence);
+	}
+}
+
+public ref struct MemoryWriter<T> : IWriter<T>
 {
 	private readonly Memory<T> _memory;
 	private int _length;
@@ -12,42 +95,48 @@ public struct MemoryWriter<T>
 		_memory = memory;
 	}
 
-	public int WrittenLength => _length;
+	public readonly int WrittenLength => _length;
 
 	public readonly bool HasCapacity(int length)
-		=> length + _length > _memory.Length;
+		=> length + _length < _memory.Length;
 
 	public readonly bool HasCapacity(long length)
-		=> length + _length > _memory.Length;
+		=> HasCapacity((int)length);
 
 	public void Write(T value)
 	{
 		_memory.Span[_length++] = value;
 	}
 
-	public void Write(T[] values)
+	public void Write(Span<T> span)
 	{
-		values.CopyTo(SliceSpan());
-		_length += values.Length;
+		span.CopyTo(SliceSpan());
+		_length += span.Length;
 	}
 
-	public void Write(ReadOnlySequence<T> content)
+	public void Write(ReadOnlySpan<T> span)
 	{
-		if (content.IsEmpty)
+		span.CopyTo(SliceSpan());
+		_length += span.Length;
+	}
+
+	public void Write(ReadOnlySequence<T> sequence)
+	{
+		if (sequence.IsEmpty)
 		{
 			return;
 		}
 
-		CheckValidCapacity(content.Length);
+		CheckValidCapacity(sequence.Length);
 
-		if (content.IsSingleSegment)
+		if (sequence.IsSingleSegment)
 		{
-			content.FirstSpan.CopyTo(SliceSpan());
-			_length += content.FirstSpan.Length;
+			sequence.FirstSpan.CopyTo(SliceSpan());
+			_length += sequence.FirstSpan.Length;
 			return;
 		}
 
-		foreach (var segment in content)
+		foreach (var segment in sequence)
 		{
 			segment.Span.CopyTo(SliceSpan());
 			_length += segment.Length;
@@ -79,4 +168,17 @@ public struct MemoryWriter<T>
 			throw new ArgumentOutOfRangeException(nameof(length), $"The length {length} exceeds the capacity of the memory.");
 		}
 	}
+}
+
+public interface IWriter<T>
+{
+	void Write(T value);
+
+	void Write(Span<T> span);
+
+	void Write(ReadOnlySpan<T> span);
+
+	void Write(ReadOnlySequence<T> sequence);
+
+	bool HasCapacity(int expected);
 }

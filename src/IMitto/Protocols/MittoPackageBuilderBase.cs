@@ -1,12 +1,12 @@
 ﻿namespace IMitto.Protocols;
 
-public abstract class MittoPackageBuilderBase : IPackageBuilder
+public abstract class MittoPackageBuilderBase : IMittoPackageBuilder
 {
 	protected MittoPackageBuilderBase()
 	{
 		Headers.AddRange(
-			CreateHeaderFromKvp("encoding", "utf-8"),
-			CreateHeaderFromKvp("timestamp", TimeProvider.System.GetUtcNow().ToString("u"))
+			CreateHeader("encoding", "utf-8"),
+			CreateHeader("timestamp", TimeProvider.System.GetUtcNow().ToString("u"))
 		);
 	}
 
@@ -20,7 +20,7 @@ public abstract class MittoPackageBuilderBase : IPackageBuilder
 	
 	protected string? Package { get; set; }
 
-	public virtual IPackageBuilder WithAction(MittoAction action)
+	public virtual IMittoPackageBuilder WithAction(MittoAction action)
 	{
 		if (action == MittoAction.None)
 		{
@@ -31,41 +31,41 @@ public abstract class MittoPackageBuilderBase : IPackageBuilder
 		return this;
 	}
 
-	public virtual IPackageBuilder WithModifier(MittoModifier modifier)
+	public virtual IMittoPackageBuilder WithModifier(MittoModifier modifier)
 	{
 		Modifier = modifier;
 		return this;
 	}
 
-	public virtual IPackageBuilder AddHeader(string key, string value)
+	public virtual IMittoPackageBuilder AddHeader(string key, string value)
 	{
 		ArgumentNullException.ThrowIfNull(key, nameof(key));
 		ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-		Headers.Add(CreateHeaderFromKvp(key, value));
+		Headers.Add(CreateHeader(key, value));
 
 		return this;
 	}
 
-	public virtual IPackageBuilder AddHeaders(IEnumerable<KeyValuePair<string, string>> headers)
+	public virtual IMittoPackageBuilder AddHeaders(IEnumerable<KeyValuePair<string, string>> headers)
 	{
 		ArgumentNullException.ThrowIfNull(headers, nameof(headers));
 
-		Headers.AddRange(CreateKvpToHeader(headers));
+		Headers.AddRange(CreateHeaders(headers));
 
 		return this;
 	}
 
-	public virtual IPackageBuilder AddHeaders(params IReadOnlyList<KeyValuePair<string, string>> headers)
+	public virtual IMittoPackageBuilder AddHeaders(params IReadOnlyList<KeyValuePair<string, string>> headers)
 	{
 		ArgumentNullException.ThrowIfNull(headers, nameof(headers));
 		
-		Headers.AddRange(CreateKvpToHeader(headers));
+		Headers.AddRange(CreateHeaders(headers));
 
 		return this;
 	}
 
-	public virtual IPackageBuilder WithPackage(string package)
+	public virtual IMittoPackageBuilder WithPackage(string package)
 	{
 		ArgumentNullException.ThrowIfNull(package, nameof(package));
 
@@ -76,12 +76,12 @@ public abstract class MittoPackageBuilderBase : IPackageBuilder
 
 	public abstract IMittoPackage Build();
 
-	protected abstract IMittoHeader CreateHeaderFromKvp(string key, string value);
+	protected abstract IMittoHeader CreateHeader(string key, string value);
 
-	protected ReadOnlySpan<IMittoHeader> CreateKvpToHeader(IEnumerable<KeyValuePair<string, string>> headers)
+	protected ReadOnlySpan<IMittoHeader> CreateHeaders(IEnumerable<KeyValuePair<string, string>> headers)
 	{
 		return headers.Select(
-			kvp => CreateHeaderFromKvp(kvp.Key, kvp.Value)
+			kvp => CreateHeader(kvp.Key, kvp.Value)
 		).ToArray();
 	}
 }

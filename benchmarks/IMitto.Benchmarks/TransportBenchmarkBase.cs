@@ -2,7 +2,6 @@ using BenchmarkDotNet.Attributes;
 using IMitto.Pipelines;
 using IMitto.Protocols;
 using IMitto.Settings;
-using System.Buffers;
 
 namespace IMitto.Benchmarks;
 
@@ -19,17 +18,13 @@ public abstract class TransportBenchmarkBase
 	[GlobalSetup]
 	public void Setup()
 	{
-		_memoryStream = new MemoryStream(ArrayPool<byte>.Shared.Rent(4096));
+		_memoryStream = new MemoryStream();
 		_reader = new MittoPipeReader(_memoryStream, new MittoPipeOptions());
 		_writer = new MittoPipeWriter(_memoryStream, new MittoPipeOptions());
 
 		var kvpHeaders = Data.GetHeaders(Data.Small);
 
-		_package = MittoProtocol.CreatePackageBuilder()
-			.WithAction(MittoAction.Session)
-			.AddHeaders(kvpHeaders)
-			.WithPackage(Data.SmallBody)
-			.Build();
+		_package = CreatePackageBuilder(kvpHeaders);
 		_transport = MittoProtocol.CreateTransport(MittoProtocolVersion.V1);
 	}
 
@@ -63,8 +58,10 @@ public abstract class TransportBenchmarkBase
 		public const string Small = nameof(Small);
 		public const string Medium = nameof(Medium);
 		public const string Large = nameof(Large);
+		public const string ExtraLarge = nameof(ExtraLarge);
+		public const string XxLarge = nameof(XxLarge);
 
-		private static readonly Dictionary<string, MittoHeader> _headers = new()
+		private static readonly Dictionary<string, MittoHeader> Headers = new()
 		{
 			[Small] = new MittoHeader(SmallHeaders),
 			[Medium] = new MittoHeader(MediumHeaders),
@@ -80,9 +77,11 @@ public abstract class TransportBenchmarkBase
 		public const string LargeHeaders = "timestamp:value1\ncorrelation-id:value2\nkey3:value3\nkey4:value4\nkey5:value5\nkey6:value6\nkey7:value7\nkey8:value8";
 		public const string LargeBody = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
-		public static readonly string ExtraLargeBody = new string('a', 1024 * 10); // 10KB
+		public static readonly string TenKb = new('a', 1024 * 10); // 10KB
 
-		public static IDictionary<string, string> GetHeaders(string name) => _headers.ContainsKey(name) ? _headers[name].Headers : [];
+		public static readonly string TenMb = new('a', 1024 * 1024 * 10); // 10MB
+
+		public static IDictionary<string, string> GetHeaders(string name) => Headers.ContainsKey(name) ? Headers[name].Headers : [];
 
 		public sealed class MittoHeader(string headers)
 		{

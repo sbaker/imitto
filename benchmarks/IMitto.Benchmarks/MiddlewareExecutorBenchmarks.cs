@@ -11,22 +11,36 @@ namespace IMitto.Benchmarks;
 public class MiddlewareExecutorBenchmarks
 {
 #nullable disable
-	private MiddlewareCollection<string> _middleware;
-	private readonly string _context = "TestState";
-	private MiddlewareCollection _middlewareCollection;
-	private MiddlewareContext _middlewareContext;
+	private MiddlewareCollection _middlewareNonGeneric;
+	private MiddlewareContext _contextNonGeneric;
+
+	private MiddlewareCollection<string> _middlewareGeneric;
+	private readonly string _contextGeneric = "TestState";
+	
 	private CancellationToken _cancellationToken;
 #nullable restore
 
 	[GlobalSetup]
 	public void Setup()
 	{
-		_middlewareCollection = [
+		_middlewareNonGeneric = [
+			(next, context, token) => next(context, token),
+			(next, context, token) => next(context, token),
+			(next, context, token) => next(context, token),
 			(next, context, token) => next(context, token),
 			(next, context, token) => Task.CompletedTask
 		];
 
-		_middlewareContext = new();
+		_middlewareGeneric = [
+			(next, context, token) => next(context, token),
+			(next, context, token) => next(context, token),
+			(next, context, token) => next(context, token),
+			(next, context, token) => next(context, token),
+			(next, context, token) => Task.CompletedTask
+		];
+
+		_contextNonGeneric = new();
+
 		_cancellationToken = CancellationToken.None;
 	}
 
@@ -38,7 +52,7 @@ public class MiddlewareExecutorBenchmarks
 	{
 		for (int i = 0; i < IterationCount; i++)
 		{
-			await _middleware.HandleAsync(_context, _cancellationToken);
+			await _middlewareGeneric.HandleAsync(_contextGeneric, _cancellationToken);
 		}
 	}
 
@@ -47,7 +61,7 @@ public class MiddlewareExecutorBenchmarks
 	{
 		for (int i = 0; i < IterationCount; i++)
 		{
-			await _middlewareCollection.HandleAsync(_middlewareContext, _cancellationToken);
+			await _middlewareNonGeneric.HandleAsync(_contextNonGeneric, _cancellationToken);
 		}
 	}
 
