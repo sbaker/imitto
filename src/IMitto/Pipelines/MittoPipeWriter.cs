@@ -19,6 +19,10 @@ public class MittoPipeWriter : PipeWriter
 		_options = options;
 	}
 
+	public int MinimumWriteSize => _options.MinimumWriteSize;
+
+	public int MinimumBufferSize => _options.MinimumBufferSize;
+
 	public override void Advance(int bytes)
 	{
 		_innerWriter.Advance(bytes);
