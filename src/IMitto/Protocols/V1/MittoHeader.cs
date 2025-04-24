@@ -71,12 +71,12 @@ public sealed class MittoHeader : MittoByteContent<byte>, IMittoHeader
 		{
 			if (KeyId == MittoHeaderKey.Custom)
 			{
-				return _key ??= GetContent(_keyContent) ?? string.Empty;
+				return _key ?? (_key = GetContent(_keyContent) ?? string.Empty);
 			}
 
 			if (MittoHeaderKeys.HeaderIdToKey.TryGetValue(KeyId, out var key))
 			{
-				return key;
+				return _key = key;
 			}
 
 			return _key ?? string.Empty;

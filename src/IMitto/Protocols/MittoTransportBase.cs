@@ -208,44 +208,6 @@ public abstract class MittoTransportBase : IMittoTransport
 		return factory(ReadOnlySequence<byte>.Empty);
 	}
 
-	//{
-	//	TContent? content = null;
-
-	//	while (!token.IsCancellationRequested)
-	//	{
-	//		var result = await reader.ReadAsync(token);
-
-	//		var buffer = result.Buffer;
-	//		var sequenceReader = new SequenceReader<byte>(buffer);
-
-	//		try
-	//		{
-	//			while (sequenceReader.Remaining > 0 && content is null)
-	//			{
-	//				if (!sequenceReader.TryReadExact(TContent.ContentLengthByteCount, out var contentLengthBytes)) { break; }
-
-	//				var contentLength = BitConverter.ToInt32(contentLengthBytes.FirstSpan);
-
-	//				if (!sequenceReader.TryReadExact(contentLength, out var contentBytes)) { break; }
-
-	//				content = factory(contentBytes);
-	//			}
-
-	//			if (result.IsCompleted) { break; }
-	//		}
-	//		catch (Exception e)
-	//		{
-	//			//_logger.LogError(e, "Error reading content");
-	//			reader.AdvanceTo(buffer.Start, buffer.End);
-	//		}
-	//		finally
-	//		{
-	//			reader.AdvanceTo(sequenceReader.Position, buffer.End);
-	//		}
-	//	}
-
-	//	return content;
-
 	protected virtual async Task WriteCommandAsync(MittoPipeWriter writer, IMittoCommand command, CancellationToken token = default)
 	{
 		var buffer = writer.GetMemory(4096);
@@ -290,13 +252,19 @@ public abstract class MittoTransportBase : IMittoTransport
 				buffer.Write(keyBytes);
 			}
 
-			if (kvp.IsSerialized && kvp is IMittoByteContent<byte> content)
+			if (kvp.IsSerialized)
 			{
-				buffer.Write(content.Content);
+				buffer.Write(kvp.Content);
 			}
 			else
 			{
 				var valueBytes = Encoding.UTF8.GetBytes(kvp.Value);
+
+				if (valueBytes.Length > byte.MaxValue)
+				{
+					throw new InvalidDataException($"Header value is too long: {kvp.Key}:{kvp.Value}");
+				}
+
 				buffer.Write((byte)valueBytes.Length);
 				buffer.Write(valueBytes);
 			}
@@ -319,21 +287,32 @@ public abstract class MittoTransportBase : IMittoTransport
 
 	protected virtual async Task WriteContentAsync(MittoPipeWriter writer, IMittoContent content, CancellationToken token = default)
 	{
-		var buffer = new AutoAdvancingBufferWriter<byte>(writer);
+		var contentBytes = content.Content;
+		var contentLengthInBytes = Array.Empty<byte>();
 
-		if (content.IsSerialized && content is IMittoByteContent<int> byteContent)
+		if (content.IsSerialized)
 		{
-			buffer.Write(BitConverter.GetBytes((int)byteContent.Content.Length));
-			buffer.Write(byteContent.Content);
+			contentLengthInBytes = BitConverter.GetBytes((int)content.Content.Length);
 		}
 		else
 		{
-			var contentBytes = Encoding.UTF8.GetBytes(content.Package);
-			buffer.Write(BitConverter.GetBytes(contentBytes.Length));
-			buffer.Write(contentBytes);
+			contentBytes = new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(content.Package));
+			contentLengthInBytes = BitConverter.GetBytes((int)contentBytes.Length);
 		}
 
-		writer.Advance(buffer.WrittenLength);
+		if (contentBytes.Length >= writer.MinimumWriteSize)
+		{
+			var buffer = new AutoAdvancingBufferWriter<byte>(writer);
+			buffer.Write(contentLengthInBytes);
+			buffer.Write(contentBytes);
+		}
+		else
+		{
+			writer.Write(contentLengthInBytes);
+			writer.Write(contentBytes);
+		}
+
+		writer.Advance((int)contentBytes.Length);
 
 		var flushResult = await writer.FlushAsync(token).Await();
 

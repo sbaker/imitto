@@ -1,8 +1,10 @@
 using BenchmarkDotNet.Attributes;
 using IMitto.Protocols;
+using Microsoft.VSDiagnostics;
 
 namespace IMitto.Benchmarks;
 
+[CPUUsageDiagnoser]
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [MarkdownExporterAttribute.Default]
@@ -20,6 +22,7 @@ public class SmallBodyProtocolTransportBenchmarks : TransportBenchmarkBase
 }
 
 
+[CPUUsageDiagnoser]
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [MarkdownExporterAttribute.Default]
@@ -37,6 +40,7 @@ public class MediumBodyProtocolTransportBenchmarks : TransportBenchmarkBase
 }
 
 
+[CPUUsageDiagnoser]
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [MarkdownExporterAttribute.Default]
@@ -54,6 +58,7 @@ public class LargeBodyProtocolTransportBenchmarks : TransportBenchmarkBase
 }
 
 
+[CPUUsageDiagnoser]
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [MarkdownExporterAttribute.Default]
@@ -71,6 +76,7 @@ public class TenKbBodyProtocolTransportBenchmarks : TransportBenchmarkBase
 }
 
 
+[CPUUsageDiagnoser]
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [MarkdownExporterAttribute.Default]

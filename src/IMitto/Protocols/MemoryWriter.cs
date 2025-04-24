@@ -2,13 +2,13 @@
 
 namespace IMitto.Protocols;
 
-public ref struct AutoAdvancingBufferWriter<T> : IWriter<T>
+public class AutoAdvancingBufferWriter<T> : IWriter<T>
 {
 	private readonly IBufferWriter<T> _writer;
 	private readonly int _defaultCapacity;
 	private MemoryWriter<T> _memoryWriter;
 
-	public readonly int WrittenLength => _memoryWriter.WrittenLength;
+	public int WrittenLength => _memoryWriter.WrittenLength;
 
 	public AutoAdvancingBufferWriter(IBufferWriter<T> writer, int defaultMemoryCapacity = 4096)
 	{
@@ -55,7 +55,7 @@ public ref struct AutoAdvancingBufferWriter<T> : IWriter<T>
 		_memoryWriter = new MemoryWriter<T>(memory);
 	}
 
-	public readonly bool HasCapacity(int expected)
+	public bool HasCapacity(int expected)
 	{
 		return _memoryWriter.HasCapacity(expected);
 	}
@@ -85,7 +85,7 @@ public ref struct AutoAdvancingBufferWriter<T> : IWriter<T>
 	}
 }
 
-public ref struct MemoryWriter<T> : IWriter<T>
+public class MemoryWriter<T> : IWriter<T>
 {
 	private readonly Memory<T> _memory;
 	private int _length;
@@ -95,12 +95,12 @@ public ref struct MemoryWriter<T> : IWriter<T>
 		_memory = memory;
 	}
 
-	public readonly int WrittenLength => _length;
+	public  int WrittenLength => _length;
 
-	public readonly bool HasCapacity(int length)
+	public  bool HasCapacity(int length)
 		=> length + _length < _memory.Length;
 
-	public readonly bool HasCapacity(long length)
+	public  bool HasCapacity(long length)
 		=> HasCapacity((int)length);
 
 	public void Write(T value)
@@ -143,7 +143,7 @@ public ref struct MemoryWriter<T> : IWriter<T>
 		}
 	}
 
-	private readonly Span<T> SliceSpan(int? capacity = null)
+	private Span<T> SliceSpan(int? capacity = null)
 	{
 		if (capacity.HasValue)
 		{
@@ -153,7 +153,7 @@ public ref struct MemoryWriter<T> : IWriter<T>
 		return _memory.Span[_length..];
 	}
 
-	private readonly void CheckValidCapacity(int length)
+	private void CheckValidCapacity(int length)
 	{
 		if (length + _length > _memory.Length)
 		{
@@ -161,24 +161,11 @@ public ref struct MemoryWriter<T> : IWriter<T>
 		}
 	}
 
-	private readonly void CheckValidCapacity(long length)
+	private void CheckValidCapacity(long length)
 	{
 		if (length + _length > _memory.Length)
 		{
 			throw new ArgumentOutOfRangeException(nameof(length), $"The length {length} exceeds the capacity of the memory.");
 		}
 	}
-}
-
-public interface IWriter<T>
-{
-	void Write(T value);
-
-	void Write(Span<T> span);
-
-	void Write(ReadOnlySpan<T> span);
-
-	void Write(ReadOnlySequence<T> sequence);
-
-	bool HasCapacity(int expected);
 }

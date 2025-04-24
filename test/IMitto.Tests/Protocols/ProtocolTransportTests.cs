@@ -1,6 +1,7 @@
 ﻿using IMitto.Pipelines;
 using IMitto.Protocols;
 using IMitto.Settings;
+using IMitto.Tests.Utilities;
 using System.Buffers;
 using System.Text;
 
@@ -292,6 +293,45 @@ public class ProtocolTransportTests
 		}
 	}
 
+	[Theory]
+	[InlineData(Data.XlHeader, Data.SmallBody)]
+	[InlineData(Data.XlHeader, Data.MediumBody)]
+	[InlineData(Data.XlHeader, Data.LargeBody)]
+	[InlineData(Data.XlHeader, Data.ExtraLarge)]
+	[InlineData(Data.XlHeader, Data.XxLarge)]
+	[InlineData(Data.XlHeader, "")]
+	public async Task SerializingHeader257CharsThrows_InvalidDataException(string headerKey, string body)
+	{
+		var kvpHeaders = Data.GetHeaders(headerKey);
+
+		var builder = MittoProtocol.CreatePackageBuilder()
+			.WithAction(MittoAction.Session)
+			.AddHeaders(kvpHeaders)
+			.WithModifier(MittoModifier.Start)
+			.WithPackage(body switch
+			{
+				Data.ExtraLarge => Data.TenKb,
+				Data.XxLarge => Data.TenMb,
+				_ => body
+			});
+
+		var contentLength = Encoding.UTF8.GetByteCount(body switch
+		{
+			Data.ExtraLarge => Data.TenKb,
+			Data.XxLarge => Data.TenMb,
+			_ => body
+		});
+
+		var package = builder.Build();
+
+		using var stream = new MemoryStream();
+		stream.Position = 0;
+
+		var writer = MittoPipe.CreateWriter(stream, MittoOptions.Default.Pipeline);
+		await Assert.ThrowsAsync<InvalidDataException>(async ()
+			=> await MittoProtocol.WritePackageAsync(writer, package, CancellationToken.None));
+	}
+
 	private static class Data
 	{
 		public const string Small = nameof(Small);
@@ -299,13 +339,7 @@ public class ProtocolTransportTests
 		public const string Large = nameof(Large);
 		public const string ExtraLarge = nameof(ExtraLarge);
 		public const string XxLarge = nameof(XxLarge);
-
-		private static readonly Dictionary<string, MittoHeader> Headers = new()
-		{
-			[Small] = new MittoHeader(SmallHeaders),
-			[Medium] = new MittoHeader(MediumHeaders),
-			[Large] = new MittoHeader(LargeHeaders)
-		};
+		public const string XlHeader = nameof(XlHeader);
 
 		public const string SmallHeaders = "encoding:value1\nkey2:value2";
 		public const string SmallBody = "Lorem ipsum dolor sit amet, consectetur.";
@@ -316,13 +350,23 @@ public class ProtocolTransportTests
 		public const string LargeHeaders = "timestamp:value1\ncorrelation-id:value2\nkey3:value3\nkey4:value4\nkey5:value5\nkey6:value6\nkey7:value7\nkey8:value8";
 		public const string LargeBody = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
+		public static readonly string ExtraLargeHeader = $"key1:{RandomStringGenerator.GenerateRandomString(257)}"; // 10KB
+
 		public static readonly string TenKb = new('a', 1024 * 10); // 10KB
 
 		public static readonly string TenMb = new('a', 1024 * 1024 * 10); // 10MB
 
-		public static IDictionary<string, string> GetHeaders(string name) => Headers.ContainsKey(name) ? Headers[name].Headers : [];
+		private static readonly Dictionary<string, MittoTestDataHeader> Headers = new()
+		{
+			[Small] = new MittoTestDataHeader(SmallHeaders),
+			[Medium] = new MittoTestDataHeader(MediumHeaders),
+			[Large] = new MittoTestDataHeader(LargeHeaders),
+			[XlHeader] = new MittoTestDataHeader(ExtraLargeHeader)
+		};
 
-		public sealed class MittoHeader(string headers)
+		public static IDictionary<string, string> GetHeaders(string name) => Headers.TryGetValue(name, out MittoTestDataHeader? value) ? value.Headers : [];
+
+		public sealed class MittoTestDataHeader(string headers)
 		{
 			public Dictionary<string, string> Headers { get; } = headers.Split('\n')
 				.Select(x => x.Split(':'))
