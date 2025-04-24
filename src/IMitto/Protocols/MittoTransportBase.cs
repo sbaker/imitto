@@ -205,6 +205,8 @@ public abstract class MittoTransportBase : IMittoTransport
 			}
 		}
 
+		//there wasn't a content created and we're done reading what
+		//was in the buffer. just create a default empty content for now.
 		return factory(ReadOnlySequence<byte>.Empty);
 	}
 
@@ -294,36 +296,39 @@ public abstract class MittoTransportBase : IMittoTransport
 		{
 			contentLengthInBytes = BitConverter.GetBytes((int)content.Content.Length);
 		}
-		else
+		else if (!string.IsNullOrEmpty(content.Package))
 		{
 			contentBytes = new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(content.Package));
 			contentLengthInBytes = BitConverter.GetBytes((int)contentBytes.Length);
 		}
 
-		if (contentBytes.Length >= writer.MinimumWriteSize)
+		if (contentBytes.Length > 0)
 		{
-			var buffer = new AutoAdvancingBufferWriter<byte>(writer);
-			buffer.Write(contentLengthInBytes);
-			buffer.Write(contentBytes);
-		}
-		else
-		{
-			writer.Write(contentLengthInBytes);
-			writer.Write(contentBytes);
-		}
+			if (contentBytes.Length >= writer.MinimumWriteSize)
+			{
+				var buffer = new AutoAdvancingBufferWriter<byte>(writer);
+				buffer.Write(contentLengthInBytes);
+				buffer.Write(contentBytes);
+			}
+			else
+			{
+				writer.Write(contentLengthInBytes);
+				writer.Write(contentBytes);
+			}
 
-		writer.Advance((int)contentBytes.Length);
+			writer.Advance((int)contentBytes.Length);
 
-		var flushResult = await writer.FlushAsync(token).Await();
+			var flushResult = await writer.FlushAsync(token).Await();
 
-		if (flushResult.IsCanceled)
-		{
-			throw new OperationCanceledException("Write command operation was canceled.");
-		}
+			if (flushResult.IsCanceled)
+			{
+				throw new OperationCanceledException("Write command operation was canceled.");
+			}
 
-		if (flushResult.IsCompleted)
-		{
-			throw new InvalidOperationException("Write command operation was completed.");
+			if (flushResult.IsCompleted)
+			{
+				throw new InvalidOperationException("Write command operation was completed.");
+			}
 		}
 	}
 
@@ -332,14 +337,12 @@ public abstract class MittoTransportBase : IMittoTransport
 	private static TCommand? ReadCommand<TCommand>(Func<MittoProtocolVersion, MittoAction, MittoModifier, TCommand> factory, ref SequenceReader<byte> sequenceReader)
 		where TCommand : class, IMittoCommand
 	{
-		TCommand? command = null;
-
 		if (!sequenceReader.TryReadExact(TCommand.VersionLength, out var versionBytes))
 		{
 			return null;
 		}
 
-		MittoProtocolVersion version = MittoConverter.ToProtocolVersion(versionBytes.FirstSpan);
+		var version = MittoConverter.ToProtocolVersion(versionBytes.FirstSpan);
 
 		if (!sequenceReader.TryReadExact(TCommand.ActionLength, out var actionBytes))
 		{
@@ -355,7 +358,7 @@ public abstract class MittoTransportBase : IMittoTransport
 
 		var modifier = MittoConverter.ToModifier(modifierBytes.FirstSpan);
 
-		command = factory(version, action, modifier);
+		var command = factory(version, action, modifier);
 
 		return command;
 	}

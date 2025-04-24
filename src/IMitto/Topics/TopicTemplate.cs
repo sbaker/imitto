@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Primitives;
 
-using System;
-using System.Linq;
-
 namespace IMitto.Topics;
 
 public class TopicTemplate : ITopicTemplate
