@@ -9,4 +9,8 @@
 	CorrelationId = 6,
 	PackageEncoding = 7,
 	Ttl = 8,
+	ClientVersion = 9,
+	ServerVersion = 10,
+	SessionId = 11,
+	StatusCode = 12,
 }

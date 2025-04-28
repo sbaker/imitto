@@ -3,6 +3,7 @@ using IMitto.Middlware;
 using IMitto.Settings;
 using IMitto.Protocols.Models;
 using IMitto.Protocols.Requests;
+using IMitto.Protocols;
 
 namespace IMitto.Net.Server;
 
@@ -37,16 +38,24 @@ internal class MittoServerConnectionContextMiddlewareHandler : IMiddlewareHandle
 					}
 				}
 
+				var transport = MittoProtocol.DefaultProtocolTransport;
+
 				try
 				{
-					var request = await context.Socket.ReadAsync<MittoRequest<MittoMessageBody>>(token).Await();
+					var package = await transport.ReadPackageAsync(context.Socket.GetReader(), token).Await();
 
-					if (request == null)
+					if (!package.Command.Action.HasFlag(MittoAction.Connect))
 					{
+						var mustConnectPackage = MittoProtocol.CreatePackageBuilder()
+							.WithAction(MittoAction.Connect)
+							.WithModifier(MittoModifier.Error)
+							.AddHeader(MittoHeaderKey.StatusCode, MittoModifier.Error.ToString())
+							.Build();
+						await transport.WritePackageAsync(context.Socket.GetWriter(), mustConnectPackage, token);
 						break;
 					}
 
-					var mittoContext = new MittoConnectionContext(context, request);
+					var mittoContext = new MittoConnectionContext(context, package);
 
 					await _innerHandler.HandleAsync(mittoContext, token).Await();
 				}

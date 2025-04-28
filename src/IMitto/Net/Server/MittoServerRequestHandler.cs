@@ -33,13 +33,12 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 
 	public Task HandleAuthenticationAsync(MittoConnectionContext context, CancellationToken token)
 	{
-		return AuthenticationAsync(context.Connection, context.Request, token);
+		return AuthenticationAsync(context.Connection, context.Package, token);
 	}
 
 	public Task HandleAuthorizationAsync(MittoConnectionContext context, CancellationToken token)
 	{
-		var message = context.Request.GetBody<MittoTopicMessageBody>();
-		return AuthorizeAsync(context.Connection, new MittoRequest<MittoTopicMessageBody>(message, context.Request.Header), token);
+		return AuthorizeAsync(context.Connection, context.Package, token);
 	}
 
 	public async Task HandleEventNotificationAsync(MittoConnectionContext context, CancellationToken token)
@@ -50,19 +49,19 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 
 		if (await writer.WaitToWriteAsync(token).Await())
 		{
-			var eventNotification = context.Request.GetBody<EventNotificationsModel>(_options.Json);
+			//var eventNotification = context.Request.GetBody<EventNotificationsModel>(_options.Json);
 
 			//TODO: Event is null..
 
-			var eventContext = new ServerEventNotificationsContext(context.ConnectionId, eventNotification);
+			//var eventContext = new ServerEventNotificationsContext(context.ConnectionId, eventNotification);
 
-			await writer.WriteAsync(eventContext, token).Await();
+			//await writer.WriteAsync(eventContext, token).Await();
 		}
 	}
 
-	private async Task AuthorizeAsync(ConnectionContext context, IMittoRequest<MittoTopicMessageBody> message, CancellationToken token)
+	private async Task AuthorizeAsync(ConnectionContext context, IMittoPackage package, CancellationToken token)
 	{
-		var validationResult = await _authenticationHandler.AuthorizeTopicAccessAsync(context, message).Await();
+		var validationResult = await _authenticationHandler.AuthorizeTopicAccessAsync(context, package).Await();
 
 		if (validationResult.IsAuthorized)
 		{
@@ -71,54 +70,54 @@ public class MittoServerRequestHandler : IMittoRequestHandler
 			// TODO: but might need to verify before publishing. Then again the server should
 			// TODO: respond the client with its permission (or if it applies) to publish that event locally 
 
-			context.Topics = message.Body.Topics;
+			//context.Topics = message.Body.Topics;
 
 			_logger.LogTrace("Topic Registration: start {connectionId}", context.ConnectionId);
 			await RegisterClientInServerManager(context, token).Await();
 			_logger.LogTrace("Topic Registration: end {connectionId}", context.ConnectionId);
 
-			await SendResponse(context, new MittoStatusResponse(MittoStatusBody.WithStatus((int)HttpStatusCode.OK), message.Header), token).Await();
+			//await SendResponse(context, new MittoStatusResponse(MittoStatusBody.WithStatus((int)HttpStatusCode.OK), message.Header), token).Await();
 			return;
 		}
 
-		_logger.LogWarning("Topic Registration: failed {connectionId}", context.ConnectionId);
+		//_logger.LogWarning("Topic Registration: failed {connectionId}", context.ConnectionId);
 
-		var body = MittoStatusBody.WithStatus((int)HttpStatusCode.Unauthorized);
+		//var body = MittoStatusBody.WithStatus((int)HttpStatusCode.Unauthorized);
 
-		if (validationResult.AccessAuthorizationDetails != null)
-		{
-			body.Details = validationResult.AccessAuthorizationDetails;
-		}
+		//if (validationResult.AccessAuthorizationDetails != null)
+		//{
+		//	body.Details = validationResult.AccessAuthorizationDetails;
+		//}
 		
-		await SendResponse(context, new MittoStatusResponse(body, message.Header), token);
+		//await SendResponse(context, new MittoStatusResponse(body, message.Header), token);
 
 		context.Socket.Dispose();
 	}
 
-	private async Task AuthenticationAsync(ConnectionContext context, IMittoRequest<MittoMessageBody> request, CancellationToken token)
+	private async Task AuthenticationAsync(ConnectionContext context, IMittoPackage package, CancellationToken token)
 	{
 		MittoHeader? header = MittoHeader.Error;
 		MittoStatusBody? body = MittoStatusBody.Error("The request could not be authenticated.");
 
-		if (request.Header.Action == MittoEventType.Authentication)
+		if (package.Command.Action.HasFlag(MittoAction.Auth))
 		{
 			_logger.LogTrace("Authenticating request: start {connectionId}", context.ConnectionId);
 
-			var authenticationRequest = new MittoRequest<MittoAuthenticationMessageBody>(request.GetBody<MittoAuthenticationMessageBody>(), request.Header);
+			//var authenticationRequest = new MittoRequest<MittoAuthenticationMessageBody>(request.GetBody<MittoAuthenticationMessageBody>(), request.Header);
 
-			var authenticated = await _authenticationHandler.HandleAuthenticationAsync(context, authenticationRequest, token).Await();
+			//var authenticated = await _authenticationHandler.HandleAuthenticationAsync(context, authenticationRequest, token).Await();
 
-			body = MittoStatusBody.WithStatus(authenticated
-				? (int)HttpStatusCode.OK
-				: (int)HttpStatusCode.Unauthorized);
-			header = MittoHeader.Authorization(authenticated
-				? MittoEventType.Completed
-				: MittoEventType.Unauthorized, context.ConnectionId);
+			//body = MittoStatusBody.WithStatus(authenticated
+			//	? (int)HttpStatusCode.OK
+			//	: (int)HttpStatusCode.Unauthorized);
+			//header = MittoHeader.Authorization(authenticated
+			//	? MittoEventType.Completed
+			//	: MittoEventType.Unauthorized, context.ConnectionId);
 
 			_logger.LogTrace("Authenticating request: end {connectionId}", context.ConnectionId);
 		}
 
-		await SendResponse(context, new MittoStatusResponse(body, header), token).Await();
+		//await SendResponse(context, new MittoStatusResponse(body, header), token).Await();
 	}
 
 	private async Task RegisterClientInServerManager(ConnectionContext context, CancellationToken token)

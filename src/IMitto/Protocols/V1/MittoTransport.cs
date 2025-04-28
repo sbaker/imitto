@@ -20,12 +20,12 @@ internal sealed class MittoTransport : MittoTransportBase
 		{
 			if (version != ProtocolVersion)
 			{
-				// Not sure what to do here...for now there is only one version.
-				// But consider this scenario when a server has been running 
-				// and client updates to latest ahead of server. Right now, though they are
-				// paired together in the same bundle and can choose client or server.
-				// I think the server needs to be as lenient and backward compatable as possible
-				// for the time being. Maybe throw or warn later on if the the server can't parse.
+				// TODO: Not sure what to do here...for now there is only one version.
+				// TODO: But consider this scenario when a server has been running 
+				// TODO: and client updates to latest ahead of server. Right now, though they are
+				// TODO: paired together in the same bundle and can choose client or server.
+				// TODO: I think the server needs to be as lenient and backward compatable as possible
+				// TODO: for the time being. Maybe throw or warn later on if the the server can't parse.
 			}
 
 			return new(action, modifier);

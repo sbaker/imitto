@@ -1,0 +1,273 @@
+@page "/clients"
+@attribute [StreamRendering]
+@using MittoServer.Models
+@using MittoServer.Services
+@using System.ComponentModel
+@inject IClientService ClientService
+@inject ITopicService TopicService
+@inject ILogger<ClientManagement> Logger
+
+<PageTitle>Client Management</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Client Management</h1>
+        <button class="btn btn-primary" @onclick="() => OpenDialog()" disabled="@_loading">
+            <i class="oi oi-plus"></i> Add Client
+        </button>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Client ID</th>
+                        <th>Topics</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var client in _clients)
+                    {
+                        <tr>
+                            <td>@client.ClientId</td>
+                            <td>@string.Join(", ", client.Topics.Select(t => t.Name))</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => OpenDialog(client)" disabled="@_loading">
+                                    <i class="oi oi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteClient(client.Id)" disabled="@_loading">
+                                    <i class="oi oi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (_showDialog)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingClient != null ? "Edit Client" : "Add New Client")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDialog"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="clientName" class="form-label">Client Name</label>
+                        <input type="text" class="form-control" id="clientName" @bind="_newClient.Name" disabled="@_loading">
+                    </div>
+                    <div class="mb-3">
+                        <label for="clientId" class="form-label">Client ID</label>
+                        <input type="text" class="form-control" id="clientId" @bind="_newClient.ClientId" disabled="@_loading">
+                    </div>
+                    <div class="mb-3">
+                        <label for="clientSecret" class="form-label">Client Secret</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="clientSecret" @bind="_newClient.ClientSecret" disabled="@_loading">
+                            <button class="btn btn-outline-secondary" type="button" @onclick="GenerateCredentials" disabled="@_loading">
+                                Generate
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="topics" class="form-label">Topics</label>
+                        <select class="form-select" id="topics" multiple @onchange="UpdateSelectedTopics" disabled="@_loading">
+                            @foreach (var topic in _availableTopics)
+                            {
+                                <option value="@topic.Id" selected="@(_newClient.Topics.Any(t => t.Name == topic.Name))">@topic.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog" disabled="@_loading">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveClient" disabled="@_loading">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+            </div>
+            <div class="toast-body">
+                @_error
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [TypeConverter]
+    private List<Client> _clients = new();
+    private List<Topic> _availableTopics = new();
+    private bool _showDialog;
+    private Client? _editingClient;
+    private Client _newClient = new();
+    private string? _error;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            _loading = true;
+            
+            var clientsTask = ClientService.GetAllClientsAsync();
+            var topicsTask = TopicService.GetAllTopicsAsync();
+
+            await Task.WhenAll(clientsTask, topicsTask);
+            
+            _clients = clientsTask.Result;
+            _availableTopics = topicsTask.Result;
+        }
+        catch (Exception ex)
+        {
+            _error = "Failed to load data";
+            Logger.LogError(ex, "Error loading data");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateSelectedTopics(ChangeEventArgs e)
+    {
+        var selectedValues = e.Value as IEnumerable<string>;
+        if (selectedValues != null)
+        {
+            _newClient.Topics = _availableTopics.Where(t => selectedValues.Contains(t.Id)).ToList();
+        }
+    }
+
+    private void OpenDialog(Client? client = null)
+    {
+        Logger.LogInformation("OpenDialog called");
+        if (client != null)
+        {
+            _editingClient = client;
+            _newClient = new Client
+            {
+                ClientId = client.ClientId,
+                ClientSecret = client.ClientSecret,
+                Topics = client.Topics.ToList()
+            };
+        }
+        else
+        {
+            _editingClient = null;
+            _newClient = new Client();
+        }
+        _showDialog = true;
+        Logger.LogInformation($"ShowDialog set to {_showDialog}");
+        StateHasChanged();
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+        _editingClient = null;
+        Logger.LogInformation("CloseDialog called, ShowDialog set to false");
+        StateHasChanged();
+    }
+
+    private async Task GenerateCredentials()
+    {
+        try
+        {
+            _loading = true;
+            var credentials = await ClientService.GenerateCredentialsAsync();
+            _newClient.ClientId = credentials.ClientId;
+            _newClient.ClientSecret = credentials.ClientSecret;
+        }
+        catch (Exception ex)
+        {
+            _error = "Failed to generate credentials";
+            Logger.LogError(ex, "Error generating credentials");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveClient()
+    {
+        try
+        {
+            _loading = true;
+            if (_editingClient != null)
+            {
+                var updated = await ClientService.UpdateClientAsync(_editingClient.Id, _newClient);
+                _clients = _clients.Select(c => c.Id == _editingClient.Id ? updated : c).ToList();
+            }
+            else
+            {
+                var created = await ClientService.CreateClientAsync(_newClient);
+                _clients.Add(created);
+            }
+            CloseDialog();
+        }
+        catch (Exception ex)
+        {
+            _error = "Failed to save client";
+            Logger.LogError(ex, "Error saving client");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteClient(string id)
+    {
+        try
+        {
+            _loading = true;
+            await ClientService.DeleteClientAsync(id);
+            _clients = _clients.Where(c => c.Id != id).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = "Failed to delete client";
+            Logger.LogError(ex, "Error deleting client");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+} 

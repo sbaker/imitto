@@ -19,5 +19,10 @@
 		{
 			return new MittoHeader(key, value);
 		}
+
+		protected override IMittoHeader CreateHeader(MittoHeaderKey key, string value)
+		{
+			return new MittoHeader(key, value);
+		}
 	}
 }

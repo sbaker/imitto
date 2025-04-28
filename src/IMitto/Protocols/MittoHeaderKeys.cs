@@ -1,4 +1,6 @@
-﻿public static class MittoHeaderKeys
+﻿namespace IMitto.Protocols;
+
+public static class MittoHeaderKeys
 {
 	public static readonly Dictionary<MittoHeaderKey, string> HeaderIdToKey = new()
 	{
@@ -10,9 +12,13 @@
 		{ MittoHeaderKey.CorrelationId, "correlation-id" },
 		{ MittoHeaderKey.PackageEncoding, "package-encoding" },
 		{ MittoHeaderKey.Ttl, "ttL" },
+		{ MittoHeaderKey.ClientVersion, "client-version" },
+		{ MittoHeaderKey.ServerVersion, "server-version" },
+		{ MittoHeaderKey.SessionId, "session-id" },
+		{ MittoHeaderKey.StatusCode, "status-code" },
 	};
 
-	public static readonly Dictionary<string, MittoHeaderKey> KeyToHeaderId = new (
+	public static readonly Dictionary<string, MittoHeaderKey> KeyToHeaderId = new(
 		HeaderIdToKey.ToDictionary(kvp => kvp.Value, kvp => kvp.Key), StringComparer.OrdinalIgnoreCase
 	);
 }

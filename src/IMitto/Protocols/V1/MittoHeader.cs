@@ -20,6 +20,12 @@ public sealed class MittoHeader : MittoByteContent<byte>, IMittoHeader
 		Value = value;
 	}
 
+	public MittoHeader(MittoHeaderKey keyId, string value) : base()
+	{
+		_keyId = keyId;
+		_value = value;
+	}
+
 	public MittoHeader(string key, ReadOnlySequence<byte> value) : base(value)
 	{
 		Key = key;

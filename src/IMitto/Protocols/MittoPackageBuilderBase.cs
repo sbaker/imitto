@@ -20,6 +20,23 @@ public abstract class MittoPackageBuilderBase : IMittoPackageBuilder
 	
 	protected string? Package { get; set; }
 
+	public IMittoPackageBuilder AddHeader(MittoHeaderKey key, string value)
+	{
+		Headers.Add(CreateHeader(key, value));
+
+		return this;
+	}
+
+	public IMittoPackageBuilder AddHeaders(IEnumerable<KeyValuePair<MittoHeaderKey, string>> headers)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IMittoPackageBuilder AddHeaders(params IReadOnlyList<KeyValuePair<MittoHeaderKey, string>> headers)
+	{
+		throw new NotImplementedException();
+	}
+
 	public virtual IMittoPackageBuilder WithAction(MittoAction action)
 	{
 		if (action == MittoAction.None)
@@ -79,6 +96,15 @@ public abstract class MittoPackageBuilderBase : IMittoPackageBuilder
 	protected abstract IMittoHeader CreateHeader(string key, string value);
 
 	protected ReadOnlySpan<IMittoHeader> CreateHeaders(IEnumerable<KeyValuePair<string, string>> headers)
+	{
+		return headers.Select(
+			kvp => CreateHeader(kvp.Key, kvp.Value)
+		).ToArray();
+	}
+
+	protected abstract IMittoHeader CreateHeader(MittoHeaderKey key, string value);
+
+	protected ReadOnlySpan<IMittoHeader> CreateHeaders(IEnumerable<KeyValuePair<MittoHeaderKey, string>> headers)
 	{
 		return headers.Select(
 			kvp => CreateHeader(kvp.Key, kvp.Value)

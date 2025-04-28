@@ -7,6 +7,7 @@ using IMitto.Protocols;
 using IMitto.Protocols.Responses;
 using IMitto.Protocols.Models;
 using IMitto.Protocols.Requests;
+using System.Text;
 
 namespace IMitto.Net.Clients;
 
@@ -123,27 +124,42 @@ public class MittoClient : MittoHost<MittoClientOptions>, IMittoClient
 			.Add(async (next, context, ct) => {
 				_logger.LogTrace("Auth Middleware: start {connectionId}", context.ConnectionId);
 
-				var authBody = new MittoAuthenticationMessageBody
+				var packageBuilder = MittoProtocol.CreatePackageBuilder()
+					.WithAction(MittoAction.Connect & MittoAction.Session & MittoAction.Auth)
+					.WithModifier(MittoModifier.Start)
+					.AddHeader(MittoHeaderKey.CorrelationId, Guid.CreateVersion7().ToString())
+					.AddHeader(MittoHeaderKey.ClientVersion, $"{typeof(MittoClient).Assembly.GetName().Version?.ToString() ?? "0.0.0.1"}")
+					.AddHeader(MittoHeaderKey.PackageEncoding, Encoding.UTF8.HeaderName)
+					.Build();
+
+				await Connection.SendPackageAsync(packageBuilder, ct);
+
+				//var authBody = new MittoAuthenticationMessageBody
+				//{
+				//	Key = Options.AuthenticationKey,
+				//	Secret = Options.AuthenticationSecret
+				//};
+
+				//var authHeader = new MittoHeader
+				//{
+				//	Path = MittoPaths.Auth,
+				//	Action = MittoEventType.Authentication,
+				//	Version = MittoConstants.Version,
+				//	ConnectionId = Connection.ConnectionId,
+				//};
+
+				var response = await Connection.ReadResponseAsync(ct);
+
+				//await Connection.SendRequestAsync(new AuthenticationRequest(authBody, authHeader), ct).Await();
+				//var response = await Connection.ReadResponseAsync<MittoStatusResponse>(ct).Await();
+				var responseCommand = response.Command;
+
+				if (responseCommand.Action.HasFlag(MittoAction.Session) && responseCommand.Modifier.HasFlag(MittoModifier.Start))
 				{
-					Key = Options.AuthenticationKey,
-					Secret = Options.AuthenticationSecret
-				};
+					Connection.ConnectionId = response!.Headers[MittoHeaderKey.SessionId].Value;
+				}
 
-				var authHeader = new MittoHeader
-				{
-					Path = MittoPaths.Auth,
-					Action = MittoEventType.Authentication,
-					Version = MittoConstants.Version,
-					ConnectionId = Connection.ConnectionId,
-				};
-
-				await Connection.SendRequestAsync(new AuthenticationRequest(authBody,
-																authHeader), ct).Await();
-				var response = await Connection.ReadResponseAsync<MittoStatusResponse>(ct).Await();
-
-				Connection.ConnectionId = response!.Header.ConnectionId;
-
-				if (response.Body.Status.Success)
+				if (responseCommand.Action.HasFlag(MittoAction.Auth) && !responseCommand.Modifier.HasFlag(MittoModifier.Ack))
 				{
 					await next(context, ct).Await();
 				}

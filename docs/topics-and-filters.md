@@ -13,8 +13,11 @@ root
 │   │   ├── indoor
 │   │   └── outdoor
 │   └── humidity
-└── system
-    └── status
+├── system
+|   └── status
+└── battery
+    └── temperature
+    └── power-level
 ```
 
 ## Topic Filters
@@ -26,7 +29,6 @@ Filters can be exact matches, wildcards, or prefixes.
 - **Exact Match**: `/sensor/temperature/indoor`
 - **Wildcard Match**: `/sensor/temperature/*`, `/sensor/*/humidity`
 - **Prefix Match**: `/sensor/*`
-
 
 ---
 

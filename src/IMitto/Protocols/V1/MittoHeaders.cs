@@ -17,7 +17,20 @@ public sealed class MittoHeaders : Collection<IMittoHeader>, IMittoHeaders
 	{
 	}
 
+	public IMittoHeader this[byte key] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+	public IMittoHeader this[MittoHeaderKey key] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
 	public static byte HeaderCountLength => 1;
+
+	public bool Exists(string key)
+	{
+		return this.FirstOrDefault(h => h.HasStringKey && h.Key == key) != null;
+	}
+
+	public bool Exists(MittoHeaderKey keyId)
+	{
+		return this.FirstOrDefault(h => h.KeyId == keyId) != null;
+	}
 
 	public bool TryGetValue(byte key, [NotNullWhen(true)] out IMittoHeader? value)
 	{

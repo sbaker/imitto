@@ -1,0 +1,238 @@
+@page "/topics"
+@attribute [StreamRendering]
+@using Microsoft.Extensions.Logging
+@using MittoServer.Models
+@using MittoServer.Services
+@inject ITopicService TopicService
+@inject IClientService ClientService
+@inject ILogger<TopicManagement> Logger
+
+<PageTitle>Topic Management</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Topic Management</h1>
+        <button class="btn btn-primary" @onclick="() => OpenDialog()" disabled="@_loading">
+            <i class="oi oi-plus"></i> Add Topic
+        </button>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var topic in _topics)
+                    {
+                        <tr>
+                            <td>@topic.Name</td>
+                            <td>@topic.Description</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => OpenDialog(topic)" disabled="@_loading">
+                                    <i class="oi oi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTopic(topic.Id)" disabled="@_loading">
+                                    <i class="oi oi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (_showDialog)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingTopic != null ? "Edit Topic" : "Add New Topic")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDialog"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" @bind="_newTopic.Name" disabled="@_loading">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="3" @bind="_newTopic.Description" disabled="@_loading"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="client" class="form-label">Associate Client</label>
+                        <select id="client" class="form-control" @bind="_selectedClientId" disabled="@_loading">
+                            <option value="">-- Select a Client --</option>
+                            @foreach (var client in _clients)
+                            {
+                                <option value="@client.Id">@client.ClientId</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog" disabled="@_loading">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveTopic" disabled="@_loading">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+            </div>
+            <div class="toast-body">
+                @_error
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Topic> _topics = new();
+    private List<Client> _clients = new();
+    private bool _showDialog;
+    private Topic? _editingTopic;
+    private Topic _newTopic = new();
+    private string? _error;
+    private string? _selectedClientId;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTopics();
+    }
+
+    private async Task LoadTopics()
+    {
+        try
+        {
+            _loading = true;
+            _topics = await TopicService.GetAllTopicsAsync();
+            _clients = await ClientService.GetAllClientsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = "Failed to load topics";
+            Logger.LogError(ex, "Error loading topics");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenDialog(Topic? topic = null)
+    {
+        Logger.LogInformation("OpenDialog called");
+        if (topic != null)
+        {
+            _editingTopic = topic;
+            _newTopic = new Topic
+            {
+                Name = topic.Name,
+                Description = topic.Description
+            };
+        }
+        else
+        {
+            _editingTopic = null;
+            _newTopic = new Topic();
+        }
+        _showDialog = true;
+        Logger.LogInformation($"ShowDialog set to {_showDialog}");
+        StateHasChanged();
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+        _editingTopic = null;
+        Logger.LogInformation("CloseDialog called, ShowDialog set to false");
+        StateHasChanged();
+    }
+
+    private async Task SaveTopic()
+    {
+        try
+        {
+            _loading = true;
+            if (_editingTopic != null)
+            {
+                var updated = await TopicService.UpdateTopicAsync(_editingTopic.Id, _newTopic);
+                _topics = _topics.Select(t => t.Id == _editingTopic.Id ? updated : t).ToList();
+            }
+            else
+            {
+                _editingTopic = await TopicService.CreateTopicAsync(_newTopic);
+                _topics.Add(_editingTopic);
+            }
+
+            if (_selectedClientId is not null)
+            {
+                var client = _clients.First(c => c.Id == _selectedClientId);
+                client.Topics.Add(_editingTopic);
+                await ClientService.UpdateClientAsync(_selectedClientId, client);
+            }
+
+            _editingTopic = null;
+
+            CloseDialog();
+        }
+        catch (Exception ex)
+        {
+            _error = "Failed to save topic";
+            Logger.LogError(ex, "Error saving topic");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteTopic(string id)
+    {
+        try
+        {
+            _loading = true;
+            await TopicService.DeleteTopicAsync(id);
+            _topics = _topics.Where(t => t.Id != id).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = "Failed to delete topic";
+            Logger.LogError(ex, "Error deleting topic");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+} 

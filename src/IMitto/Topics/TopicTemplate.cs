@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Primitives;
+using System.Diagnostics.CodeAnalysis;
 
 namespace IMitto.Topics;
 
@@ -21,6 +22,7 @@ public class TopicTemplate : ITopicTemplate
 		Segments = segments;
 	}
 
+	[StringSyntax(StringSyntaxAttribute.Uri)]
 	public string Template { get; }
 
 	public TopicSegment[] Segments { get; }

@@ -70,7 +70,11 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 
 						var connectionContext = new ConnectionContext(_eventManager, socket);
 
-						await _eventManager.PublishServerEventAsync(ServerEventConstants.ConnectionReceivedEvent, connectionContext, connectionContext.ConnectionId, token).Await();
+						await _eventManager.PublishServerEventAsync(
+							ServerEventConstants.ConnectionReceivedEvent,
+							connectionContext,
+							connectionContext.ConnectionId,
+							token).Await();
 
 						_logger.LogTrace("Initializing client/server workflow: start {connectionId}", connectionContext.ConnectionId);
 
@@ -108,29 +112,31 @@ public sealed class MittoServer : MittoHost<MittoServerOptions>, IMittoServer
 		return new MiddlewareBuilder<MittoConnectionContext>()
 			.Add((next, context, ct) => {
 				_logger.LogTrace("Server Request Listener: start {connectionId}", context.ConnectionId);
-				if (context.Request.Header.Path == MittoPaths.Auth)
-				{
-					return _requestHandler.HandleAuthenticationAsync(context, ct);
-				}
+
+
+				//if (context.Request.Header.Path == MittoPaths.Auth)
+				//{
+				//	return _requestHandler.HandleAuthenticationAsync(context, ct);
+				//}
 
 				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
 				return next(context, ct);
 			})
 			.Add((next, context, ct) => {
 				_logger.LogTrace("Server Request Listener: start {connectionId}", context.ConnectionId);
-				if (context.Request.Header.Path == MittoPaths.Topics && context.Request.Header.Action == MittoEventType.Consume)
-				{
-					return _requestHandler.HandleAuthorizationAsync(context, ct);
-				}
+				//if (context.Request.Header.Path == MittoPaths.Topics && context.Request.Header.Action == MittoEventType.Consume)
+				//{
+				//	return _requestHandler.HandleAuthorizationAsync(context, ct);
+				//}
 				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
 				return next(context, ct);
 			})
 			.Add((next, context, ct) => {
 				_logger.LogTrace("Server Request Listener: start {connectionId}", context.ConnectionId);
-				if (context.Request.Header.Path == MittoPaths.Topics && context.Request.Header.Action == MittoEventType.Produce)
-				{
-					return _requestHandler.HandleEventNotificationAsync(context, ct);
-				}
+				//if (context.Request.Header.Path == MittoPaths.Topics && context.Request.Header.Action == MittoEventType.Produce)
+				//{
+				//	return _requestHandler.HandleEventNotificationAsync(context, ct);
+				//}
 				_logger.LogTrace("Middleware: end {connectionId}", context.ConnectionId);
 				return next(context, ct);
 			})

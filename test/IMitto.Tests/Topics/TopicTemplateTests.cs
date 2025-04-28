@@ -31,29 +31,78 @@ public class TopicTemplateTests
 	}
 
 	[Fact]
-	public void ParsedTemplateMatchesTopic()
+	public void ParsedTemplateHas3Segments()
 	{
-		const string topicString = "/topic/template";
+		const string topicString = "/topic/template/text";
 
-		var topic = TopicParser.ParseTopic(topicString);
 		var topicTemplate = TopicParser.ParseTemplate(topicString);
 
 		Assert.NotNull(topicTemplate);
 		Assert.False(topicTemplate.IsRoot);
 		Assert.Equal(topicString, topicTemplate.Template);
 
-		Assert.NotNull(topic);
-		Assert.Equal(topicString, topic.Value);
-
-		Assert.True(topicTemplate.IsMatch(topic));
+		Assert.Collection(topicTemplate.Segments,
+			t => Assert.Equal("topic", t.Segment),
+			t => Assert.Equal("template", t.Segment),
+			t => Assert.Equal("text", t.Segment)
+		);
 	}
 
 	[Fact]
-	public void ParsedTemplateWithWildcardMatchesTopic()
+	public void ParsedTemplateHas3SegmentsWithOneWildcard()
+	{
+		const string topicString = "/topic/*/text";
+
+		var topicTemplate = TopicParser.ParseTemplate(topicString);
+
+		Assert.NotNull(topicTemplate);
+		Assert.False(topicTemplate.IsRoot);
+		Assert.Equal(topicString, topicTemplate.Template);
+
+		Assert.Collection(topicTemplate.Segments,
+			t => Assert.Equal("topic", t.Segment),
+			t => { Assert.Equal("*", t.Segment); Assert.True(t.IsWildcard); },
+			t => Assert.Equal("text", t.Segment)
+		);
+	}
+
+	[Fact]
+	public void ParsedTemplateMatchesTopic()
+	{
+		const string topicString = "/topic/template";
+
+		ParseAndAssertTopics(topicString, topicString);
+	}
+
+	[Fact]
+	public void ParsedTemplateWithWildcardMatchesTopicEndSegment()
 	{
 		const string topicString = "/topic/template";
 		const string topicTemplateString = "/topic/*";
 
+		ParseAndAssertTopics(topicString, topicTemplateString);
+	}
+
+	[Fact]
+	public void ParsedTemplateWithWildcardMatchesTopicMiddleSegment()
+	{
+		const string topicString = "/topic/template/text";
+		const string topicTemplateString = "/topic/*/text";
+
+		ParseAndAssertTopics(topicString, topicTemplateString);
+	}
+
+	[Fact]
+	public void ParsedTemplateWithWildcardMatchesTopicMiddleAndEndSegment()
+	{
+		const string topicString = "/topic/template/text";
+		const string topicTemplateString = "/topic/*/*";
+
+		ParseAndAssertTopics(topicString, topicTemplateString);
+	}
+
+	private static void ParseAndAssertTopics(string topicString, string topicTemplateString)
+	{
 		var topic = TopicParser.ParseTopic(topicString);
 		var topicTemplate = TopicParser.ParseTemplate(topicTemplateString);
 

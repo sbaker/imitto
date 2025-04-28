@@ -1,12 +1,11 @@
 ﻿using IMitto.Net.Server.Results;
-using IMitto.Protocols.Models;
-using IMitto.Protocols.Requests;
+using IMitto.Protocols;
 
 namespace IMitto.Net.Server;
 
 public interface IMittoAuthenticationHandler
 {
-	Task<TopicAuthorizationResult> AuthorizeTopicAccessAsync(ConnectionContext context, IMittoRequest<MittoTopicMessageBody> request);
+	Task<TopicAuthorizationResult> AuthorizeTopicAccessAsync(ConnectionContext context, IMittoPackage package);
 
-	Task<bool> HandleAuthenticationAsync(ConnectionContext context, IMittoRequest<MittoAuthenticationMessageBody> request, CancellationToken token = default);
+	Task<bool> HandleAuthenticationAsync(ConnectionContext context, IMittoPackage package, CancellationToken token = default);
 }

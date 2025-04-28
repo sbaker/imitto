@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using IMitto.Pipelines;
+using IMitto.Protocols;
 using IMitto.Protocols.Requests;
 using IMitto.Protocols.Responses;
 
@@ -7,7 +8,7 @@ namespace IMitto.Net.Clients;
 
 public class MittoClientConnection : MittoConnection, IMittoClientConnection
 {
-	private MittoSocket? _mittoSocket;
+	private MittoPipelineSocket? _mittoSocket;
 
 	public MittoClientConnection(MittoClientOptions options) : base()
 	{
@@ -18,7 +19,7 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 
 	protected MittoClientOptions Options { get; }
 
-	protected MittoSocket? Socket => _mittoSocket;
+	protected MittoPipelineSocket? Socket => _mittoSocket;
 
 	public override Task CloseAsync(CancellationToken token = default)
 	{
@@ -59,6 +60,26 @@ public class MittoClientConnection : MittoConnection, IMittoClientConnection
 	public bool IsDataAvailable()
 	{
 		return _mittoSocket?.DataAvailable ?? false;
+	}
+
+	public Task<IMittoPackage> ReadResponseAsync(CancellationToken token)
+	{
+		if (_mittoSocket == null || !_mittoSocket.IsConnected)
+		{
+			throw new InvalidOperationException("Socket is not connected or not initialized.");
+		}
+
+		return MittoProtocol.DefaultProtocolTransport.ReadPackageAsync(_mittoSocket.GetReader(), token);
+	}
+
+	public Task SendPackageAsync(IMittoPackage package, CancellationToken token)
+	{
+		if (_mittoSocket == null || !_mittoSocket.IsConnected)
+		{
+			throw new InvalidOperationException("Socket is not connected or not initialized.");
+		}
+
+		return MittoProtocol.WritePackageAsync(_mittoSocket.GetWriter(), package, token);
 	}
 
 	public Task<TResponse?> ReadResponseAsync<TResponse>(CancellationToken token) where TResponse : IMittoResponse
