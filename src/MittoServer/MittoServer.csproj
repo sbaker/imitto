@@ -19,4 +19,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\IMitto.Extensions.DependencyInjection\IMitto.Extensions.DependencyInjection.csproj" />
+    <ProjectReference Include="..\IMitto\IMitto.csproj" />
+  </ItemGroup>
+
 </Project>

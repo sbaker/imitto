@@ -31,6 +31,7 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
+                        <th>Name</th>
                         <th>Client ID</th>
                         <th>Topics</th>
                         <th>Actions</th>
@@ -40,14 +41,15 @@
                     @foreach (var client in _clients)
                     {
                         <tr>
+                            <td>@client.Name</td>
                             <td>@client.ClientId</td>
                             <td>@string.Join(", ", client.Topics.Select(t => t.Name))</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => OpenDialog(client)" disabled="@_loading">
-                                    <i class="oi oi-pencil"></i>
+                                    <i class="bi-pencil-square"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteClient(client.Id)" disabled="@_loading">
-                                    <i class="oi oi-trash"></i>
+                                    <i class="bi-trash3"></i>
                                 </button>
                             </td>
                         </tr>
@@ -178,6 +180,7 @@
             _editingClient = client;
             _newClient = new Client
             {
+                Name = client.Name,
                 ClientId = client.ClientId,
                 ClientSecret = client.ClientSecret,
                 Topics = client.Topics.ToList()

@@ -25,8 +25,8 @@ public class AppDbContext : DbContext
 				.WithMany(e => e.Topics)
                 .UsingEntity<ClientTopic>(
 					j => j.HasOne(ct => ct.Client).WithMany().HasForeignKey(ct => ct.ClientId),
-					j => j.HasOne(ct => ct.Topic).WithMany().HasForeignKey(ct => ct.TopicId)
-				 );
+					j => j.HasOne(ct => ct.Topic).WithMany().HasForeignKey(ct => ct.TopicId),
+				    j => j.HasKey(t => new { t.TopicId, t.ClientId }));
 		});
 
         modelBuilder.Entity<Client>(entity =>
@@ -38,8 +38,9 @@ public class AppDbContext : DbContext
                 .WithMany(e => e.Clients)
 				.UsingEntity<ClientTopic>(
                     j => j.HasOne(ct => ct.Topic).WithMany().HasForeignKey(ct => ct.TopicId),
-					j => j.HasOne(ct => ct.Client).WithMany().HasForeignKey(ct => ct.ClientId)
-                 );
+					j => j.HasOne(ct => ct.Client).WithMany().HasForeignKey(ct => ct.ClientId),
+					j => j.HasKey(t => new { t.TopicId, t.ClientId })
+				 );
         });
     }
 } 

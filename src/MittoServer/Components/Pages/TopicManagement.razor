@@ -44,10 +44,10 @@
                             <td>@topic.Description</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => OpenDialog(topic)" disabled="@_loading">
-                                    <i class="oi oi-pencil"></i>
+                                    <i class="bi-pencil-square"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTopic(topic.Id)" disabled="@_loading">
-                                    <i class="oi oi-trash"></i>
+                                    <i class="bi-trash3"></i>
                                 </button>
                             </td>
                         </tr>
@@ -76,7 +76,7 @@
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" rows="3" @bind="_newTopic.Description" disabled="@_loading"></textarea>
                     </div>
-                    <div class="mb-3">
+                    @* <div class="mb-3">
                         <label for="client" class="form-label">Associate Client</label>
                         <select id="client" class="form-control" @bind="_selectedClientId" disabled="@_loading">
                             <option value="">-- Select a Client --</option>
@@ -85,7 +85,7 @@
                                 <option value="@client.Id">@client.ClientId</option>
                             }
                         </select>
-                    </div>
+                    </div> *@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseDialog" disabled="@_loading">Cancel</button>

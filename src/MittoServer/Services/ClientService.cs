@@ -9,9 +9,13 @@ namespace MittoServer.Services;
 public interface IClientService
 {
     Task<List<Client>> GetAllClientsAsync();
+
     Task<ClientCredentials> GenerateCredentialsAsync();
+
     Task<Client> CreateClientAsync(Client client);
+
     Task<Client> UpdateClientAsync(string id, Client client);
+
     Task DeleteClientAsync(string id);
 }
 
@@ -26,7 +30,7 @@ public class ClientService : IClientService
 
     public async Task<List<Client>> GetAllClientsAsync()
     {
-        return await _dbContext.Clients.ToListAsync();
+        return await _dbContext.Clients.Include(t => t.Topics).ToListAsync();
     }
 
     public async Task<ClientCredentials> GenerateCredentialsAsync()
@@ -59,7 +63,8 @@ public class ClientService : IClientService
         if (existingClient == null)
             throw new Exception("Client not found");
 
-        existingClient.ClientId = client.ClientId;
+		existingClient.Name = client.Name;
+		existingClient.ClientId = client.ClientId;
         existingClient.ClientSecret = client.ClientSecret;
         existingClient.Topics = client.Topics;
 
